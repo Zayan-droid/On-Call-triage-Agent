@@ -1,0 +1,8 @@
+# Runtime dependencies for the Lambda function.
+#
+# Deliberately tiny. boto3 and botocore are already present in the Lambda
+# Python runtime, so pinning them here is for local development and the eval
+# harness only -- the deployment zip ships just the `agent/` package, which
+# keeps the artifact small and cold starts short.
+boto3>=1.40
+botocore>=1.40

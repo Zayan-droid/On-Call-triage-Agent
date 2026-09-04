@@ -1,0 +1,36 @@
+# ---- Secrets: never commit anything in this block ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+credentials
+.aws/
+*_credentials*
+*secret*
+!*secrets.example*
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Lambda / build artifacts ----
+*.zip
+build/
+dist/
+.aws-sam/
+package/
+
+# ---- IDE / OS ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

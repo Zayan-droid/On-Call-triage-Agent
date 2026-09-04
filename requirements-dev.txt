@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# Test and tooling dependencies. Never deployed.
+pytest>=8.0
+pytest-cov>=5.0
+# moto gives real DynamoDB semantics -- including ConditionExpression
+# evaluation -- in-process. Hand-rolled dict mocks cannot test the dedupe,
+# which is the one piece of DynamoDB logic in this project worth testing.
+moto[dynamodb,sns,cloudwatch]>=5.0
+ruff>=0.6
