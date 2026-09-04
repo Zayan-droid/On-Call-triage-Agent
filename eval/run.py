@@ -24,6 +24,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -428,7 +429,16 @@ def main(argv: list[str] | None = None) -> int:
     cfg = Config.from_env(**overrides)
 
     prompt_variant = args.prompt_variant or cfg.prompt_variant
-    run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # Timestamp to the second, plus a short random suffix. The suffix is not
+    # decoration: an offline sweep takes about two seconds, so running the
+    # baseline and the treatment back to back lands them in the same second and
+    # they collide on run id -- after which the results loader, which
+    # deduplicates by run id, silently drops one of the two runs being compared.
+    run_id = args.run_id or (
+        datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        + "-"
+        + uuid.uuid4().hex[:4]
+    )
     suite = args.tag or f"{args.mode}-{prompt_variant}"
 
     meta = {

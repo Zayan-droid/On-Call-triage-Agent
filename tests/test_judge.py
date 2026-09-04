@@ -109,6 +109,55 @@ class TestHeuristicJudge:
         result = result_with("CPU peaked at 96 percent.", metrics=METRICS)
         assert self.judge.judge({}, result).score == 1.0
 
+    def test_correct_subtraction_is_not_a_fabrication(self):
+        """94 - 80 = 14. Flagging that as hallucinated would make the judge
+        penalise exactly the reasoning it is meant to reward."""
+        result = result_with(
+            "CPU is 14 points over the 80 threshold.", metrics=METRICS
+        )
+        assert self.judge.judge({}, result).score == 1.0
+
+    def test_correct_ratio_is_not_a_fabrication(self):
+        result = result_with(
+            "CPU is running 2.3 times its 40.1 baseline.", metrics=METRICS
+        )
+        assert self.judge.judge({}, result).score == 1.0
+
+    @pytest.mark.parametrize(
+        "reasoning",
+        [
+            "CPU was pinned at 99.7% for 41 minutes.",
+            "The error rate reached 17.3% across 5000 requests.",
+            "Latency hit 4820ms and 63 hosts were affected.",
+        ],
+    )
+    def test_derivation_did_not_cost_the_judge_its_teeth(self, reasoning):
+        """The whole risk of allowing derived arithmetic is grounding
+        everything. Percentage changes were removed for exactly this reason:
+        (80-40.1)/40.1 is 99.5, which grounded an invented 'pinned at 99.7%'."""
+        assert self.judge.judge({}, result_with(reasoning, metrics=METRICS)).score == 0.0
+
+    def test_derivations_come_only_from_salient_figures(self):
+        """Deriving from every datapoint would be tens of thousands of values,
+        enough to ground almost any number in range."""
+        from eval.judge import derived_numbers, salient_numbers
+
+        points = [{"t": f"t{i}", "avg": float(i)} for i in range(200)]
+        result = result_with("x", metrics={**METRICS, "datapoints": points})
+        salient = salient_numbers(result)
+        assert len(salient) < 15, "salient set must stay small"
+        assert len(derived_numbers(salient)) < 250
+
+    def test_sub_one_ratios_are_not_derived(self):
+        """Sub-1 ratios cluster tightly, and with a 0.5 absolute tolerance any
+        of them would ground any small number."""
+        from eval.judge import derived_numbers
+
+        derived = derived_numbers({40.0, 80.0})
+        assert 2.0 in derived  # 80 / 40, the direction an operator says
+        assert 0.5 not in derived  # 40 / 80
+        assert all(value >= 1.0 for value in derived if value != 0)
+
     def test_alert_values_count_as_grounded(self):
         result = result_with(
             "The alarm fired at 94.0 against a threshold of 80.0 after 12 minutes."

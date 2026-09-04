@@ -403,6 +403,40 @@ def _to_native(obj: Any) -> Any:
     return obj
 
 
+_WIRE_TYPES = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
+
+
+def _looks_like_wire_format(item: dict) -> bool:
+    """Is this a raw AttributeValue map rather than a deserialised item?"""
+    if not item:
+        return False
+    return all(
+        isinstance(v, dict) and len(v) == 1 and next(iter(v)) in _WIRE_TYPES
+        for v in item.values()
+    )
+
+
+def deserialise_item(item: Any) -> dict:
+    """Normalise a DynamoDB item to plain Python whichever layer produced it.
+
+    The boto3 *resource* layer deserialises successful responses, but it does not
+    touch exceptions -- so the item returned by
+    `ReturnValuesOnConditionCheckFailure` arrives as raw wire format
+    (`{"incident_id": {"S": "INC-..."}}`) even when the write went through
+    `Table.put_item`. Reading it as if it were a normal item yields a dict where
+    a string is expected, and the dedupe silently returns an unusable incident
+    id. Verified against both real DynamoDB semantics and moto.
+    """
+    if not isinstance(item, dict) or not item:
+        return {}
+    if _looks_like_wire_format(item):
+        from boto3.dynamodb.types import TypeDeserializer
+
+        deserialiser = TypeDeserializer()
+        return {k: _to_native(deserialiser.deserialize(v)) for k, v in item.items()}
+    return _to_native(item)
+
+
 # --------------------------------------------------------------------------
 # Fingerprinting and ids
 # --------------------------------------------------------------------------
@@ -781,12 +815,12 @@ def create_incident(ctx: ToolContext, args: dict) -> dict:
         # DynamoDB returns it in the error when ReturnValuesOnConditionCheckFailure
         # is honoured; we fall back to a GetItem when it is not (older API
         # behaviour, and some local doubles), so the tool never returns nothing.
-        existing = _to_native(exc.response.get("Item") or {})
+        existing = deserialise_item(exc.response.get("Item"))
         if not existing:
             fetched = ctx.ddb.get_item(
                 Key={"PK": f"INCIDENT#{fingerprint}", "SK": "ACTIVE"}
             )
-            existing = _to_native(fetched.get("Item") or {})
+            existing = deserialise_item(fetched.get("Item"))
 
         existing_id = existing.get("incident_id")
         log_info(

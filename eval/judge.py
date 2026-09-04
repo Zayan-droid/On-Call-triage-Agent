@@ -99,30 +99,86 @@ def extract_numbers(text: str) -> list[float]:
     return out
 
 
-def collect_observed_numbers(result: Any) -> set[float]:
-    """Every number the agent was actually shown: tool results plus the alert."""
-    observed: set[float] = set()
+def _walk_numbers(node: Any, into: set[float]) -> None:
+    if isinstance(node, bool):
+        return  # bool is an int subclass; True would ground the number 1
+    if isinstance(node, (int, float)):
+        into.add(float(node))
+    elif isinstance(node, str):
+        into.update(extract_numbers(node))
+    elif isinstance(node, dict):
+        for value in node.values():
+            _walk_numbers(value, into)
+    elif isinstance(node, (list, tuple, set)):
+        for value in node:
+            _walk_numbers(value, into)
 
-    def walk(node: Any) -> None:
-        if isinstance(node, bool):
-            return  # bool is an int subclass; True would ground the number 1
-        if isinstance(node, (int, float)):
-            observed.add(float(node))
-        elif isinstance(node, str):
-            for value in extract_numbers(node):
-                observed.add(value)
-        elif isinstance(node, dict):
-            for value in node.values():
-                walk(value)
-        elif isinstance(node, (list, tuple, set)):
-            for value in node:
-                walk(value)
 
+def salient_numbers(result: Any) -> set[float]:
+    """The handful of figures an operator would actually reason *with*.
+
+    The alert's value, threshold and duration, plus each metric summary's
+    avg/max/min/latest/first. Roughly a dozen numbers, not the hundreds in the
+    raw datapoint arrays -- which is what makes deriving from them safe.
+    """
+    salient: set[float] = set()
+    for key in ("value", "threshold", "duration_min"):
+        _walk_numbers((result.alert or {}).get(key), salient)
     for call in result.trace:
-        walk(call.result)
-        walk(call.arguments)
-    walk(result.alert)
-    return observed
+        if not call.ok or not isinstance(call.result, dict):
+            continue
+        _walk_numbers(call.result.get("summary"), salient)
+    return {n for n in salient if n is not None}
+
+
+def derived_numbers(salient: set[float]) -> set[float]:
+    """Arithmetic an operator does out loud, from the salient figures only.
+
+    "CPU is 14 points over the 80 threshold" is a correct subtraction, not a
+    fabrication, and flagging it as one would make the judge penalise exactly
+    the reasoning it is meant to reward. So pairwise differences and ratios of
+    the salient figures count as grounded.
+
+    Three deliberate restrictions, each of which was needed to stop the judge
+    losing its teeth:
+
+    * **Salient figures only, not the full observed set.** A metric window holds
+      hundreds of datapoints; all their pairwise differences would be tens of
+      thousands of values, and with any tolerance at all almost every number in
+      range would come back grounded. A judge that agrees with everything is
+      worse than one that is occasionally too strict.
+    * **No percentage changes.** They were tried and removed. `(80-40.1)/40.1`
+      is 99.5, which grounded an invented "pinned at 99.7%" -- percentage
+      derivations spread across 0-200 densely enough to blanket the range where
+      fabricated percentages live. The cost is that "rose 17.5% above the
+      threshold" now reads as ungrounded; stating the two figures instead is
+      both clearer and directly checkable.
+    * **Ratios only in the larger-over-smaller direction.** Sub-1 ratios cluster
+      tightly, and with a 0.5 absolute tolerance any of them would ground any
+      small number.
+    """
+    values = sorted(salient)
+    derived: set[float] = set()
+    for i, smaller in enumerate(values):
+        for larger in values[i + 1 :]:
+            derived.add(larger - smaller)
+            if smaller:
+                derived.add(larger / smaller)
+    return derived
+
+
+def collect_observed_numbers(result: Any) -> set[float]:
+    """Every number the agent could legitimately state.
+
+    Three sources: what the tools returned, what was in the alert, and simple
+    arithmetic over the salient figures (see `derived_numbers`).
+    """
+    observed: set[float] = set()
+    for call in result.trace:
+        _walk_numbers(call.result, observed)
+        _walk_numbers(call.arguments, observed)
+    _walk_numbers(result.alert, observed)
+    return observed | derived_numbers(salient_numbers(result))
 
 
 def _is_grounded(value: float, observed: set[float]) -> bool:

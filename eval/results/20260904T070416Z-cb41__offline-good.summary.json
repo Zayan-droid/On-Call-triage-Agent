@@ -1,12 +1,12 @@
 {
   "meta": {
-    "run_id": "20260904T064022Z",
-    "suite": "baseline",
-    "tag": "baseline",
+    "run_id": "20260904T070416Z-cb41",
+    "suite": "offline-good",
+    "tag": "offline-good",
     "mode": "offline",
-    "policy": "prompt_sensitive",
-    "prompt_variant": "v1_baseline",
-    "model_id": "scripted:prompt_sensitive",
+    "policy": "good",
+    "prompt_variant": "v2_investigate_first",
+    "model_id": "scripted:good",
     "judge": "heuristic",
     "judge_model_id": null,
     "dataset": "D:\\Aws_triage\\eval\\alerts.jsonl",
@@ -14,35 +14,35 @@
     "dry_run": true,
     "miss_weight": 5.0,
     "false_page_weight": 1.0,
-    "started_at": "2026-09-04T06:40:22.327494+00:00",
-    "duration_s": 1.74,
-    "finished_at": "2026-09-04T06:40:24.074889+00:00"
+    "started_at": "2026-09-04T07:04:16.335562+00:00",
+    "duration_s": 2.39,
+    "finished_at": "2026-09-04T07:04:18.727945+00:00"
   },
   "summary": {
     "overall": {
       "n": 38,
-      "tool_selection_exact": 0.9473684210526315,
-      "tool_selection_f1": 0.8508771929824562,
-      "tool_selection_recall": 0.9736842105263158,
+      "tool_selection_exact": 1.0,
+      "tool_selection_f1": 0.6894736842105263,
+      "tool_selection_recall": 1.0,
       "investigated_at_all": 1.0,
-      "mean_investigation_calls": 2.0,
-      "tool_parameter_accuracy": 1.0,
-      "tool_parameter_coverage": 0.9736842105263158,
+      "mean_investigation_calls": 3.026315789473684,
+      "tool_parameter_accuracy": 0.993421052631579,
+      "tool_parameter_coverage": 1.0,
       "groundedness": 1.0,
       "groundedness_scored": 38,
       "escalation": {
         "n": 38,
         "tp": 19,
-        "fp": 5,
-        "tn": 14,
+        "fp": 1,
+        "tn": 18,
         "fn": 0,
-        "precision": 0.7916666666666666,
+        "precision": 0.95,
         "recall": 1.0,
-        "f1": 0.8837209302325582,
-        "accuracy": 0.868421052631579,
-        "false_page_rate": 0.2631578947368421,
+        "f1": 0.9743589743589743,
+        "accuracy": 0.9736842105263158,
+        "false_page_rate": 0.05263157894736842,
         "missed_page_rate": 0.0,
-        "weighted_cost": 0.13157894736842105,
+        "weighted_cost": 0.02631578947368421,
         "weights": {
           "miss": 5.0,
           "false_page": 1.0
@@ -51,18 +51,18 @@
       "decision_consistency": 1.0,
       "iteration_cap_hits": 0,
       "degraded_cases": 0,
-      "mean_latency_ms": 8.012368421052633,
-      "total_input_tokens": 169800,
-      "total_output_tokens": 15120
+      "mean_latency_ms": 21.696578947368423,
+      "total_input_tokens": 201300,
+      "total_output_tokens": 17220
     },
     "by_bucket": {
       "clear_incident": {
         "n": 10,
         "tool_selection_exact": 1.0,
-        "tool_selection_f1": 1.0,
+        "tool_selection_f1": 0.8,
         "tool_selection_recall": 1.0,
         "investigated_at_all": 1.0,
-        "mean_investigation_calls": 2.0,
+        "mean_investigation_calls": 3.0,
         "tool_parameter_accuracy": 1.0,
         "tool_parameter_coverage": 1.0,
         "groundedness": 1.0,
@@ -88,17 +88,17 @@
         "decision_consistency": 1.0,
         "iteration_cap_hits": 0,
         "degraded_cases": 0,
-        "mean_latency_ms": 9.197,
-        "total_input_tokens": 48000,
-        "total_output_tokens": 4200
+        "mean_latency_ms": 21.96,
+        "total_input_tokens": 57000,
+        "total_output_tokens": 4800
       },
       "multi_step_correlation": {
         "n": 9,
         "tool_selection_exact": 1.0,
-        "tool_selection_f1": 1.0,
+        "tool_selection_f1": 0.8,
         "tool_selection_recall": 1.0,
         "investigated_at_all": 1.0,
-        "mean_investigation_calls": 2.0,
+        "mean_investigation_calls": 3.0,
         "tool_parameter_accuracy": 1.0,
         "tool_parameter_coverage": 1.0,
         "groundedness": 1.0,
@@ -124,19 +124,19 @@
         "decision_consistency": 1.0,
         "iteration_cap_hits": 0,
         "degraded_cases": 0,
-        "mean_latency_ms": 7.66,
-        "total_input_tokens": 40500,
-        "total_output_tokens": 3600
+        "mean_latency_ms": 20.211111111111112,
+        "total_input_tokens": 48600,
+        "total_output_tokens": 4140
       },
       "needs_investigation": {
         "n": 9,
-        "tool_selection_exact": 0.8888888888888888,
-        "tool_selection_f1": 0.7592592592592592,
-        "tool_selection_recall": 0.9444444444444444,
+        "tool_selection_exact": 1.0,
+        "tool_selection_f1": 0.6333333333333333,
+        "tool_selection_recall": 1.0,
         "investigated_at_all": 1.0,
-        "mean_investigation_calls": 2.0,
+        "mean_investigation_calls": 3.0,
         "tool_parameter_accuracy": 1.0,
-        "tool_parameter_coverage": 0.9444444444444444,
+        "tool_parameter_coverage": 1.0,
         "groundedness": 1.0,
         "groundedness_scored": 9,
         "escalation": {
@@ -160,34 +160,34 @@
         "decision_consistency": 1.0,
         "iteration_cap_hits": 0,
         "degraded_cases": 0,
-        "mean_latency_ms": 7.107777777777778,
-        "total_input_tokens": 38700,
-        "total_output_tokens": 3480
+        "mean_latency_ms": 23.535555555555554,
+        "total_input_tokens": 46800,
+        "total_output_tokens": 4020
       },
       "noise": {
         "n": 10,
-        "tool_selection_exact": 0.9,
-        "tool_selection_f1": 0.65,
-        "tool_selection_recall": 0.95,
+        "tool_selection_exact": 1.0,
+        "tool_selection_f1": 0.53,
+        "tool_selection_recall": 1.0,
         "investigated_at_all": 1.0,
-        "mean_investigation_calls": 2.0,
-        "tool_parameter_accuracy": 1.0,
-        "tool_parameter_coverage": 0.95,
+        "mean_investigation_calls": 3.1,
+        "tool_parameter_accuracy": 0.975,
+        "tool_parameter_coverage": 1.0,
         "groundedness": 1.0,
         "groundedness_scored": 10,
         "escalation": {
           "n": 10,
           "tp": 0,
-          "fp": 4,
-          "tn": 6,
+          "fp": 0,
+          "tn": 10,
           "fn": 0,
-          "precision": 0.0,
+          "precision": null,
           "recall": null,
           "f1": null,
-          "accuracy": 0.6,
-          "false_page_rate": 0.4,
+          "accuracy": 1.0,
+          "false_page_rate": 0.0,
           "missed_page_rate": null,
-          "weighted_cost": 0.4,
+          "weighted_cost": 0.0,
           "weights": {
             "miss": 5.0,
             "false_page": 1.0
@@ -196,41 +196,15 @@
         "decision_consistency": 1.0,
         "iteration_cap_hits": 0,
         "degraded_cases": 0,
-        "mean_latency_ms": 7.9590000000000005,
-        "total_input_tokens": 42600,
-        "total_output_tokens": 3840
+        "mean_latency_ms": 21.115000000000002,
+        "total_input_tokens": 48900,
+        "total_output_tokens": 4260
       }
     },
     "failures": [
       {
         "case_id": "investigate_007",
         "bucket": "needs_investigation",
-        "escalation": "FP",
-        "expected_page": false,
-        "actual_paged": true,
-        "missing_tools": [
-          "search_runbook"
-        ],
-        "forbidden_called": [],
-        "param_failures": [],
-        "groundedness": 1.0,
-        "error": null
-      },
-      {
-        "case_id": "noise_001",
-        "bucket": "noise",
-        "escalation": "FP",
-        "expected_page": false,
-        "actual_paged": true,
-        "missing_tools": [],
-        "forbidden_called": [],
-        "param_failures": [],
-        "groundedness": 1.0,
-        "error": null
-      },
-      {
-        "case_id": "noise_002",
-        "bucket": "noise",
         "escalation": "FP",
         "expected_page": false,
         "actual_paged": true,
@@ -246,35 +220,11 @@
         "escalation": "TN",
         "expected_page": false,
         "actual_paged": false,
-        "missing_tools": [
-          "search_runbook"
+        "missing_tools": [],
+        "forbidden_called": [],
+        "param_failures": [
+          "symptom='sustained high cpu utilisation on session-cleaner' contains none of ['flapping', 'flap', 'oscillat', 'intermittent', 'noisy']"
         ],
-        "forbidden_called": [],
-        "param_failures": [],
-        "groundedness": 1.0,
-        "error": null
-      },
-      {
-        "case_id": "noise_006",
-        "bucket": "noise",
-        "escalation": "FP",
-        "expected_page": false,
-        "actual_paged": true,
-        "missing_tools": [],
-        "forbidden_called": [],
-        "param_failures": [],
-        "groundedness": 1.0,
-        "error": null
-      },
-      {
-        "case_id": "noise_007",
-        "bucket": "noise",
-        "escalation": "FP",
-        "expected_page": false,
-        "actual_paged": true,
-        "missing_tools": [],
-        "forbidden_called": [],
-        "param_failures": [],
         "groundedness": 1.0,
         "error": null
       }
@@ -296,17 +246,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -320,19 +273,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 14.81,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 29.82,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -353,17 +307,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -377,19 +334,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.66,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 20.39,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -410,17 +368,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -434,19 +395,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.42,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 18.56,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -467,17 +429,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -491,19 +456,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.48,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 18.71,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -524,17 +490,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -548,19 +517,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 12.08,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 20.68,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -581,17 +551,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -605,19 +578,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.41,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 20.78,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -638,17 +612,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -662,19 +639,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.73,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 21.81,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -695,17 +673,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -719,19 +700,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.37,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 24.08,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -752,17 +734,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -776,19 +761,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.26,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 22.3,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -809,17 +795,20 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.8,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 5,
@@ -833,19 +822,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.75,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 22.47,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
         ]
@@ -865,19 +855,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -891,19 +883,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 6.73,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 18.47,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -922,1047 +915,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 1,
-          "tools_scored": 1,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.19,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_003",
-        "bucket": "needs_investigation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.84,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_004",
-        "bucket": "needs_investigation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 1,
-          "tools_scored": 1,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.81,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_005",
-        "bucket": "needs_investigation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 1,
-          "tools_scored": 1,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.85,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_006",
-        "bucket": "needs_investigation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.91,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_007",
-        "bucket": "needs_investigation",
-        "expected_page": false,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "FP",
-        "tool_selection": {
-          "required": [
             "get_service_metrics",
             "search_runbook"
           ],
-          "called": [
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
             "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [
             "search_runbook"
           ],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 0.5,
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
           "f1": 0.5,
-          "exact_match": false,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 1,
-          "coverage": 0.5,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.11,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_008",
-        "bucket": "needs_investigation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 1,
-          "tools_scored": 1,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.95,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "investigate_009",
-        "bucket": "needs_investigation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.58,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_001",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.68,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_002",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.71,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_003",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 8.4,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_004",
-        "bucket": "multi_step_correlation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.69,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_005",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 8.23,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_006",
-        "bucket": "multi_step_correlation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 6.7,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_007",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.17,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_008",
-        "bucket": "multi_step_correlation",
-        "expected_page": true,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "TP",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 8.63,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "multistep_009",
-        "bucket": "multi_step_correlation",
-        "expected_page": false,
-        "actual_paged": false,
-        "decision": "INCIDENT_ONLY",
-        "escalation": "TN",
-        "tool_selection": {
-          "required": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [],
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 5,
-          "checks_passed": 5,
-          "accuracy": 1.0,
-          "tools_expected": 2,
-          "tools_scored": 2,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 7.73,
-        "input_tokens": 3900,
-        "output_tokens": 360,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "noise_001",
-        "bucket": "noise",
-        "expected_page": false,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "FP",
-        "tool_selection": {
-          "required": [
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
-        },
-        "tool_parameters": {
-          "checks_total": 3,
-          "checks_passed": 3,
-          "accuracy": 1.0,
-          "tools_expected": 1,
-          "tools_scored": 1,
-          "coverage": 1.0,
-          "failures": []
-        },
-        "groundedness": {
-          "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
-          "unsupported": []
-        },
-        "decision_consistent": true,
-        "hit_iteration_cap": false,
-        "degraded": false,
-        "error": null,
-        "latency_ms": 11.46,
-        "input_tokens": 4800,
-        "output_tokens": 420,
-        "tools_called": [
-          "get_service_metrics",
-          "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
-        ]
-      }
-    },
-    {
-      "score": {
-        "case_id": "noise_002",
-        "bucket": "noise",
-        "expected_page": false,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "FP",
-        "tool_selection": {
-          "required": [
-            "get_service_metrics"
-          ],
-          "called": [
-            "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [],
-          "forbidden_called": [],
-          "extra_calls": [
-            "get_recent_deploys"
-          ],
-          "precision": 0.5,
-          "recall": 1.0,
-          "f1": 0.6666666666666666,
-          "exact_match": true,
-          "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -1983,14 +950,1104 @@
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 9.1,
+        "latency_ms": 18.74,
         "input_tokens": 4800,
         "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_003",
+        "bucket": "needs_investigation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 18.69,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
           "create_incident",
           "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_004",
+        "bucket": "needs_investigation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys",
+            "search_runbook"
+          ],
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "f1": 0.5,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 3,
+          "checks_passed": 3,
+          "accuracy": 1.0,
+          "tools_expected": 1,
+          "tools_scored": 1,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 17.57,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_005",
+        "bucket": "needs_investigation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys",
+            "search_runbook"
+          ],
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "f1": 0.5,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 3,
+          "checks_passed": 3,
+          "accuracy": 1.0,
+          "tools_expected": 1,
+          "tools_scored": 1,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.01,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_006",
+        "bucket": "needs_investigation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.08,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_007",
+        "bucket": "needs_investigation",
+        "expected_page": false,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "FP",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 4,
+          "checks_passed": 4,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.77,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_008",
+        "bucket": "needs_investigation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys",
+            "search_runbook"
+          ],
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "f1": 0.5,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 3,
+          "checks_passed": 3,
+          "accuracy": 1.0,
+          "tools_expected": 1,
+          "tools_scored": 1,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 61.01,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "investigate_009",
+        "bucket": "needs_investigation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 6 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.48,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_001",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.64,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_002",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 20.6,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_003",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 21.49,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_004",
+        "bucket": "multi_step_correlation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 19.49,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_005",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 20.37,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_006",
+        "bucket": "multi_step_correlation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 18.44,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_007",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 20.41,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_008",
+        "bucket": "multi_step_correlation",
+        "expected_page": true,
+        "actual_paged": true,
+        "decision": "PAGE",
+        "escalation": "TP",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 20.76,
+        "input_tokens": 5700,
+        "output_tokens": 480,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident",
+          "page_oncall"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "multistep_009",
+        "bucket": "multi_step_correlation",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_recent_deploys",
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "search_runbook"
+          ],
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 5,
+          "checks_passed": 5,
+          "accuracy": 1.0,
+          "tools_expected": 2,
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "grounded",
+          "justification": "All 8 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 20.7,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "noise_001",
+        "bucket": "noise",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys",
+            "search_runbook"
+          ],
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "f1": 0.5,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 3,
+          "checks_passed": 3,
+          "accuracy": 1.0,
+          "tools_expected": 1,
+          "tools_scored": 1,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "no_figures_cited",
+          "justification": "The reasoning states no numbers and makes no unsupported attribution. Nothing was fabricated, but nothing was cited either -- treated as grounded, weakly.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 24.39,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
+        ]
+      }
+    },
+    {
+      "score": {
+        "case_id": "noise_002",
+        "bucket": "noise",
+        "expected_page": false,
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
+        "tool_selection": {
+          "required": [
+            "get_service_metrics"
+          ],
+          "called": [
+            "get_recent_deploys",
+            "get_service_metrics",
+            "search_runbook"
+          ],
+          "missing": [],
+          "forbidden_called": [],
+          "extra_calls": [
+            "get_recent_deploys",
+            "search_runbook"
+          ],
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "f1": 0.5,
+          "exact_match": true,
+          "investigated_at_all": true,
+          "total_investigation_calls": 3
+        },
+        "tool_parameters": {
+          "checks_total": 3,
+          "checks_passed": 3,
+          "accuracy": 1.0,
+          "tools_expected": 1,
+          "tools_scored": 1,
+          "coverage": 1.0,
+          "failures": []
+        },
+        "groundedness": {
+          "score": 1.0,
+          "verdict": "no_figures_cited",
+          "justification": "The reasoning states no numbers and makes no unsupported attribution. Nothing was fabricated, but nothing was cited either -- treated as grounded, weakly.",
+          "unsupported": []
+        },
+        "decision_consistent": true,
+        "hit_iteration_cap": false,
+        "degraded": false,
+        "error": null,
+        "latency_ms": 21.9,
+        "input_tokens": 4800,
+        "output_tokens": 420,
+        "tools_called": [
+          "get_service_metrics",
+          "get_recent_deploys",
+          "search_runbook",
+          "create_incident"
         ]
       }
     },
@@ -2009,47 +2066,49 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
-          ],
-          "missing": [
+            "get_service_metrics",
             "search_runbook"
           ],
+          "missing": [],
           "forbidden_called": [],
           "extra_calls": [
             "get_recent_deploys"
           ],
-          "precision": 0.5,
-          "recall": 0.5,
-          "f1": 0.5,
-          "exact_match": false,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
-          "checks_total": 3,
+          "checks_total": 4,
           "checks_passed": 3,
-          "accuracy": 1.0,
+          "accuracy": 0.75,
           "tools_expected": 2,
-          "tools_scored": 1,
-          "coverage": 0.5,
-          "failures": []
+          "tools_scored": 2,
+          "coverage": 1.0,
+          "failures": [
+            "symptom='sustained high cpu utilisation on session-cleaner' contains none of ['flapping', 'flap', 'oscillat', 'intermittent', 'noisy']"
+          ]
         },
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.86,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 19.45,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -2068,19 +2127,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2094,19 +2155,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 5 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.21,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 19.61,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -2125,19 +2187,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2151,19 +2215,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.21,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 20.76,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -2173,28 +2238,30 @@
         "case_id": "noise_006",
         "bucket": "noise",
         "expected_page": false,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "FP",
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
         "tool_selection": {
           "required": [
             "get_service_metrics"
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 4
         },
         "tool_parameters": {
           "checks_total": 2,
@@ -2208,21 +2275,22 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 8.21,
-        "input_tokens": 4800,
-        "output_tokens": 420,
+        "latency_ms": 28.4,
+        "input_tokens": 5700,
+        "output_tokens": 480,
         "tools_called": [
           "get_service_metrics",
+          "get_service_metrics",
           "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
+          "search_runbook",
+          "create_incident"
         ]
       }
     },
@@ -2231,28 +2299,30 @@
         "case_id": "noise_007",
         "bucket": "noise",
         "expected_page": false,
-        "actual_paged": true,
-        "decision": "PAGE",
-        "escalation": "FP",
+        "actual_paged": false,
+        "decision": "INCIDENT_ONLY",
+        "escalation": "TN",
         "tool_selection": {
           "required": [
             "get_service_metrics"
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2265,22 +2335,22 @@
         },
         "groundedness": {
           "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "verdict": "no_figures_cited",
+          "justification": "The reasoning states no numbers and makes no unsupported attribution. Nothing was fabricated, but nothing was cited either -- treated as grounded, weakly.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.19,
+        "latency_ms": 19.31,
         "input_tokens": 4800,
         "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
-          "create_incident",
-          "page_oncall"
+          "search_runbook",
+          "create_incident"
         ]
       }
     },
@@ -2298,19 +2368,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2324,19 +2396,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.14,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 19.2,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -2355,19 +2428,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2381,19 +2456,20 @@
         "groundedness": {
           "score": 1.0,
           "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "justification": "All 7 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 7.34,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 19.35,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }
@@ -2412,19 +2488,21 @@
           ],
           "called": [
             "get_recent_deploys",
-            "get_service_metrics"
+            "get_service_metrics",
+            "search_runbook"
           ],
           "missing": [],
           "forbidden_called": [],
           "extra_calls": [
-            "get_recent_deploys"
+            "get_recent_deploys",
+            "search_runbook"
           ],
-          "precision": 0.5,
+          "precision": 0.3333333333333333,
           "recall": 1.0,
-          "f1": 0.6666666666666666,
+          "f1": 0.5,
           "exact_match": true,
           "investigated_at_all": true,
-          "total_investigation_calls": 2
+          "total_investigation_calls": 3
         },
         "tool_parameters": {
           "checks_total": 3,
@@ -2437,20 +2515,21 @@
         },
         "groundedness": {
           "score": 1.0,
-          "verdict": "grounded",
-          "justification": "All 4 figures in the reasoning match values returned by tools or present in the alert, within tolerance.",
+          "verdict": "no_figures_cited",
+          "justification": "The reasoning states no numbers and makes no unsupported attribution. Nothing was fabricated, but nothing was cited either -- treated as grounded, weakly.",
           "unsupported": []
         },
         "decision_consistent": true,
         "hit_iteration_cap": false,
         "degraded": false,
         "error": null,
-        "latency_ms": 6.87,
-        "input_tokens": 3900,
-        "output_tokens": 360,
+        "latency_ms": 18.78,
+        "input_tokens": 4800,
+        "output_tokens": 420,
         "tools_called": [
           "get_service_metrics",
           "get_recent_deploys",
+          "search_runbook",
           "create_incident"
         ]
       }

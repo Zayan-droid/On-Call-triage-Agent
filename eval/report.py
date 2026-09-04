@@ -321,11 +321,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.list:
-        print(f"{'run_id':<20}{'suite':<28}{'mode':<9}{'n':>4}  model")
+        print(f"{'run_id':<24}{'suite':<28}{'mode':<9}{'n':>4}  model")
         for run in runs:
             meta = run["meta"]
             print(
-                f"{meta['run_id']:<20}{str(meta.get('suite')):<28}{meta['mode']:<9}"
+                f"{meta['run_id']:<24}{str(meta.get('suite')):<28}{meta['mode']:<9}"
                 f"{run['summary']['overall']['n']:>4}  {meta['model_id']}"
             )
         return 0
