@@ -1,0 +1,16 @@
+# Normalise line endings in the repository regardless of the OS committing.
+# Without this, the ending you get depends on each contributor's core.autocrlf.
+* text=auto
+
+# Files that MUST be LF wherever they are checked out. A shell script with CRLF
+# fails on Linux with "bad interpreter: /usr/bin/env bash^M", which is a
+# confusing error for a problem that has nothing to do with the script.
+*.sh text eol=lf
+
+# JSONL is one record per line and is read line by line; keep it LF.
+*.jsonl text eol=lf
+
+# Treat these as text so diffs are readable.
+*.py text
+*.md text
+*.json text
