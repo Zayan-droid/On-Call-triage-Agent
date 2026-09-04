@@ -41,3 +41,9 @@ desktop.ini
 # matching *.summary.json, which keeps the scores and drops the traces.
 eval/results/*.json
 !eval/results/*.summary.json
+
+# ---- Coverage ----
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
