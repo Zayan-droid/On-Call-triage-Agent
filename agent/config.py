@@ -73,7 +73,9 @@ class Config:
     dedupe_window_min: int = 15
     # Hard ceiling on the Converse tool-use loop. Prevents an infinite
     # model/tool ping-pong from burning the Lambda timeout and the token budget.
-    max_tool_iterations: int = 6
+    # 8 leaves room for the five tools plus a retry after a validation error and
+    # a final verdict turn; a full investigation uses six.
+    max_tool_iterations: int = 8
     max_tokens: int = 2048
     # Temperature 0 so the deterministic scorers actually measure the prompt,
     # not sampling noise. See docs/DESIGN_DECISIONS.md D-14.
@@ -105,7 +107,7 @@ class Config:
             judge_model_id=_env("TRIAGE_JUDGE_MODEL_ID", DEFAULT_JUDGE_MODEL),
             prompt_variant=_env("TRIAGE_PROMPT_VARIANT", "v2_investigate_first"),
             dedupe_window_min=_env_int("TRIAGE_DEDUPE_WINDOW_MIN", 15),
-            max_tool_iterations=_env_int("TRIAGE_MAX_TOOL_ITERATIONS", 6),
+            max_tool_iterations=_env_int("TRIAGE_MAX_TOOL_ITERATIONS", 8),
             max_tokens=_env_int("TRIAGE_MAX_TOKENS", 2048),
             temperature=_env_float("TRIAGE_TEMPERATURE", 0.0),
             incident_ttl_days=_env_int("TRIAGE_INCIDENT_TTL_DAYS", 30),

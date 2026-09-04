@@ -34,3 +34,10 @@ package/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# ---- Eval results ----
+# Full run payloads carry every tool call and metric datapoint (~800KB per
+# 38-case run). They are the local audit record. The committed artifact is the
+# matching *.summary.json, which keeps the scores and drops the traces.
+eval/results/*.json
+!eval/results/*.summary.json
