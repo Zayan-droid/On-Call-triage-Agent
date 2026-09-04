@@ -1,0 +1,50 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteOwnLogsOnly",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:log-group:/aws/lambda/${FUNCTION_NAME}:*"
+    },
+    {
+      "Sid": "CreateOwnLogGroupOnly",
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": "arn:aws:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:log-group:/aws/lambda/${FUNCTION_NAME}"
+    },
+    {
+      "Sid": "InvokeOneModelThroughItsInferenceProfile",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+      "Resource": [
+        "arn:aws:bedrock:${AWS_REGION}:${AWS_ACCOUNT_ID}:inference-profile/${MODEL_ID}",
+        "arn:aws:bedrock:us-east-1::foundation-model/${FOUNDATION_MODEL_ID}",
+        "arn:aws:bedrock:us-east-2::foundation-model/${FOUNDATION_MODEL_ID}",
+        "arn:aws:bedrock:us-west-2::foundation-model/${FOUNDATION_MODEL_ID}"
+      ]
+    },
+    {
+      "Sid": "ItemLevelAccessToTheOneTable",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Query"
+      ],
+      "Resource": "arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/${TABLE_NAME}"
+    },
+    {
+      "Sid": "ReadMetricsWildcardBecauseCloudWatchHasNoResourceLevelPermissions",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:GetMetricStatistics", "cloudwatch:ListMetrics"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "PublishToTheOnePagingTopic",
+      "Effect": "Allow",
+      "Action": "sns:Publish",
+      "Resource": "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:${TOPIC_NAME}"
+    }
+  ]
+}
