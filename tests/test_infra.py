@@ -484,15 +484,45 @@ class TestDockerfiles:
         # the flags and a different sweep does not need a rebuild.
         assert '"eval.run"' in body
 
-    def test_the_agentcore_image_is_arm64_and_serves_http(self):
-        """AgentCore Runtime accepts linux/arm64 only, and rejects an amd64
-        image with an error that never mentions architecture."""
+    def test_the_agentcore_image_serves_http_and_ships_only_the_agent(self):
         body = DOCKERFILES["agentcore"].read_text(encoding="utf-8")
-        assert "--platform=linux/arm64" in body
         assert "EXPOSE 8080" in body
         assert '"agent.server"' in body
         # The eval harness has no business inside the deployed agent.
         assert "COPY eval/" not in body
+
+    def test_every_builder_asks_for_arm64_and_the_dockerfile_does_not_pin_it(self):
+        """AgentCore Runtime accepts linux/arm64 only, and rejects an amd64
+        image with an error that never mentions architecture.
+
+        The architecture is asserted where it is actually decided -- in the
+        builders -- rather than in the Dockerfile. A constant
+        `FROM --platform=...` overrides whatever the build requested, which is
+        how a multi-platform build silently yields one architecture, and
+        BuildKit lints it (FromPlatformFlagConstDisallowed). Asserting the old
+        line would have pinned exactly the thing that needed removing.
+        """
+        body = DOCKERFILES["agentcore"].read_text(encoding="utf-8")
+        from_line = next(line for line in body.splitlines() if line.startswith("FROM"))
+        assert "--platform" not in from_line, from_line
+
+        # The deploy script must request it, in both the buildx and the
+        # fallback path.
+        setup = (ROOT / "infra" / "setup.sh").read_text(encoding="utf-8")
+        step = setup[setup.index("step_agentcore_image()") : setup.index("agentcore_runtime_field()")]
+        builds = [
+            line.strip()
+            for line in step.splitlines()
+            if line.strip().startswith(("docker build", "docker buildx build"))
+        ]
+        # Two: the buildx path, and the plain-build fallback for a host without it.
+        assert len(builds) == 2, builds
+        assert all("--platform linux/arm64" in line for line in builds), builds
+
+        # And so must CI, or the image it health-checks is not the one deployed.
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        agentcore_job = ci[ci.index("Build the AgentCore image") :]
+        assert "platforms: linux/arm64" in agentcore_job.split("- name:")[0]
 
 
 class TestTeardownCoversEverySetupTarget:

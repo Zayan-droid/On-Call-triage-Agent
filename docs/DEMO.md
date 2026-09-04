@@ -15,7 +15,7 @@ you know it works?"* with a number.
 pip install -r requirements-dev.txt && pytest -q
 ```
 
-Expect `439 passed` in about 90 seconds. If that passes, nothing in the offline
+Expect `440 passed` in about 90 seconds. If that passes, nothing in the offline
 demo can fail — it needs no network, no credentials and no AWS.
 
 Have open, in this order:

@@ -31,7 +31,7 @@ pip install -r requirements-dev.txt
 
 ## Layer 0 — the automated suite
 
-439 tests, 93% line coverage, ~90 seconds. Lint and shell-lint are part of the
+440 tests, 93% line coverage, ~90 seconds. Lint and shell-lint are part of the
 gate, not a suggestion:
 
 ```bash

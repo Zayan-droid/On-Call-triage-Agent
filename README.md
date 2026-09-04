@@ -226,7 +226,7 @@ python -m venv .venv && .venv/Scripts/activate    # or: source .venv/bin/activat
 pip install -r requirements-dev.txt
 ```
 
-### The test suite — 439 tests, 93% coverage, ~90 seconds
+### The test suite — 440 tests, 93% coverage, ~90 seconds
 
 ```bash
 pytest
@@ -376,7 +376,7 @@ explains the one thing that cannot be deleted: CloudWatch custom metrics expire
 │   ├── ecs-task-definition.json
 │   ├── Dockerfile.eval-runner  the batch sweep (amd64)
 │   └── Dockerfile.agentcore    the agent itself (arm64, required)
-├── tests/                      439 tests against moto, not hand-rolled mocks
+├── tests/                      440 tests against moto, not hand-rolled mocks
 ├── .github/workflows/ci.yml    lint, tests, a real sweep, shellcheck, both images
 └── docs/
     ├── decisions.md          6 ADRs
@@ -398,7 +398,7 @@ long-lived keys in secrets is a credential nobody rotates.
 | Job | What it proves |
 |---|---|
 | `ruff` | Lint, against a rule set pinned in `pyproject.toml` rather than whatever the installed version defaults to ([D-46](docs/DESIGN_DECISIONS.md#d-46--lint-configuration-is-pinned-in-the-repository-not-inherited)) |
-| `pytest` | 439 tests with a 90% coverage floor |
+| `pytest` | 440 tests with a 90% coverage floor |
 | `eval harness` | A full 38-case sweep, two broken policies caught, **and the prompt experiment re-run from scratch** — if a refactor changes the measured effect of the prompt, that is the most important regression this project can have, and the README quotes the number |
 | `shellcheck` | The deploy scripts parse, lint clean, and print help without touching AWS |
 | `docker` | Both images build, the eval runner's imports resolve, and the AgentCore container passes the same `GET /ping` that AgentCore itself polls |

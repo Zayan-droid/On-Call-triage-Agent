@@ -8,13 +8,19 @@
 # docs/decisions.md ADR-5 for why this is a second deployment target rather
 # than a replacement for the Lambda.
 #
-# Built and pushed by `bash infra/setup.sh agentcore-image`.
+# Built and pushed by `bash infra/setup.sh agentcore_image`.
 
-# ARM64 is not a preference. AgentCore Runtime only accepts linux/arm64 images,
-# and an amd64 image is rejected at CreateAgentRuntime with an error that does
-# not mention architecture. On an x86 build host this needs buildx with
-# --platform linux/arm64, which is what setup.sh passes.
-FROM --platform=linux/arm64 public.ecr.aws/docker/library/python:3.12-slim
+# ARM64 is not a preference: AgentCore Runtime accepts linux/arm64 only, and
+# rejects an amd64 image at CreateAgentRuntime with an error that never
+# mentions architecture. On an x86 build host that needs buildx and QEMU.
+#
+# The architecture is requested by the *builder* -- `--platform linux/arm64` in
+# setup.sh, `platforms: linux/arm64` in CI -- and deliberately not pinned here.
+# A constant `FROM --platform=...` overrides whatever the build asked for,
+# which is how a multi-platform build silently produces one architecture, and
+# BuildKit lints it (FromPlatformFlagConstDisallowed) for that reason. Both
+# callers pass the platform, and a test asserts they still do.
+FROM public.ecr.aws/docker/library/python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
