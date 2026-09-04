@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 676" width="1000" height="676" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>On-Call Triage Agent architecture</title>
+  <desc>An alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. An evaluation harness replays 38 alerts, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6472"/>
+    </marker>
+    <marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b4531a"/>
+    </marker>
+  </defs>
+
+  <!-- Explicit light ground: GitHub renders this in both themes, and a
+       transparent background would leave dark text on a dark page. -->
+  <rect width="1000" height="676" fill="#fbfbfa"/>
+
+  <!-- ================= entry ================= -->
+  <rect x="380" y="20" width="240" height="40" rx="20" fill="#eef1f5" stroke="#a9b2bf"/>
+  <text x="500" y="45" text-anchor="middle" font-size="14" fill="#1f2937" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">POST /alert</text>
+  <line x1="500" y1="60" x2="500" y2="88" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= api gateway ================= -->
+  <rect x="360" y="90" width="280" height="56" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="500" y="113" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">API Gateway — HTTP API</text>
+  <text x="500" y="133" text-anchor="middle" font-size="11.5" fill="#5b6472">one route · one integration · ~3.5x cheaper than REST</text>
+  <line x1="500" y1="146" x2="500" y2="174" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= lambda ================= -->
+  <rect x="250" y="176" width="500" height="104" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="270" y="200" font-size="14" font-weight="600" fill="#111827">Lambda: triage-agent</text>
+  <text x="730" y="200" text-anchor="end" font-size="11.5" fill="#5b6472">python3.12 · 512 MB · 120 s</text>
+  <rect x="270" y="212" width="460" height="52" rx="6" fill="#f4f6f9" stroke="#c3cad6" stroke-dasharray="4 3"/>
+  <text x="500" y="232" text-anchor="middle" font-size="12.5" fill="#1f2937">Bedrock Converse loop — model ⇄ tools, max 8 iterations</text>
+  <text x="500" y="252" text-anchor="middle" font-size="11.5" fill="#5b6472">hits the cap → drop toolConfig, force a verdict on the evidence held</text>
+
+  <!-- fan-out -->
+  <path d="M 500 280 L 500 300" stroke="#5b6472" stroke-width="1.5" fill="none"/>
+  <path d="M 110 300 L 890 300" stroke="#5b6472" stroke-width="1.5" fill="none"/>
+  <line x1="110" y1="300" x2="110" y2="332" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="345" y1="300" x2="345" y2="332" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="612" y1="300" x2="612" y2="332" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="890" y1="300" x2="890" y2="332" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= bedrock ================= -->
+  <rect x="30" y="334" width="160" height="84" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="110" y="357" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">Bedrock</text>
+  <text x="110" y="376" text-anchor="middle" font-size="11.5" fill="#5b6472">Converse + tool use</text>
+  <text x="110" y="393" text-anchor="middle" font-size="11" fill="#5b6472">temperature 0</text>
+  <text x="110" y="409" text-anchor="middle" font-size="11" fill="#5b6472">throttle → jittered retry</text>
+
+  <!-- ================= cloudwatch (read) ================= -->
+  <rect x="255" y="334" width="180" height="112" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="345" y="357" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">CloudWatch</text>
+  <text x="345" y="376" text-anchor="middle" font-size="11.5" fill="#5b6472">GetMetricStatistics</text>
+  <text x="345" y="393" text-anchor="middle" font-size="11" font-weight="600" fill="#b4531a">this is a TOOL</text>
+  <text x="345" y="409" text-anchor="middle" font-size="11" fill="#5b6472">EndTime is exclusive</text>
+  <text x="345" y="426" text-anchor="middle" font-size="10.5" fill="#5b6472">metrics out via EMF,</text>
+  <text x="345" y="439" text-anchor="middle" font-size="10.5" fill="#5b6472">not PutMetricData</text>
+
+  <!-- ================= dynamodb ================= -->
+  <rect x="500" y="334" width="224" height="128" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="612" y="357" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">DynamoDB — one table</text>
+  <line x1="516" y1="366" x2="708" y2="366" stroke="#e2e6ec"/>
+  <text x="524" y="385" font-size="11.5" fill="#5b6472">runbooks</text>
+  <text x="708" y="385" text-anchor="end" font-size="10.5" fill="#8b94a3" font-family="ui-monospace, monospace">PK=RUNBOOK</text>
+  <text x="524" y="403" font-size="11.5" fill="#5b6472">deploys</text>
+  <text x="708" y="403" text-anchor="end" font-size="10.5" fill="#8b94a3" font-family="ui-monospace, monospace">PK=DEPLOY#svc</text>
+  <text x="524" y="421" font-size="11.5" font-weight="600" fill="#b4531a">incidents</text>
+  <text x="708" y="421" text-anchor="end" font-size="10.5" fill="#b4531a" font-family="ui-monospace, monospace">PK=INCIDENT#fp</text>
+  <text x="524" y="439" font-size="11.5" fill="#5b6472">eval_runs</text>
+  <text x="708" y="439" text-anchor="end" font-size="10.5" fill="#8b94a3" font-family="ui-monospace, monospace">PK=RUN#id</text>
+  <text x="612" y="456" text-anchor="middle" font-size="10.5" fill="#b4531a">conditional write · sliding 15-min dedupe</text>
+
+  <!-- ================= sns ================= -->
+  <rect x="810" y="334" width="160" height="84" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="890" y="357" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">SNS</text>
+  <text x="890" y="376" text-anchor="middle" font-size="11.5" fill="#5b6472">paging topic → email</text>
+  <text x="890" y="393" text-anchor="middle" font-size="11" fill="#5b6472">needs an incident id</text>
+  <text x="890" y="409" text-anchor="middle" font-size="11" fill="#5b6472">dry-run in the harness</text>
+
+  <!-- ================= eval harness ================= -->
+  <rect x="255" y="510" width="380" height="130" rx="8" fill="#ffffff" stroke="#b4531a" stroke-width="2"/>
+  <text x="445" y="534" text-anchor="middle" font-size="14" font-weight="600" fill="#8a3f14">Evaluation harness</text>
+  <text x="445" y="553" text-anchor="middle" font-size="11.5" fill="#5b6472">38 alerts · 4 buckets · replayed through the real agent</text>
+  <line x1="271" y1="562" x2="619" y2="562" stroke="#f0dfd3"/>
+  <text x="271" y="581" font-size="11.5" fill="#1f2937">1 · tool selection</text>
+  <text x="619" y="581" text-anchor="end" font-size="11" fill="#5b6472">deterministic</text>
+  <text x="271" y="598" font-size="11.5" fill="#1f2937">2 · tool parameters</text>
+  <text x="619" y="598" text-anchor="end" font-size="11" fill="#5b6472">deterministic</text>
+  <text x="271" y="615" font-size="11.5" fill="#1f2937">3 · groundedness</text>
+  <text x="619" y="615" text-anchor="end" font-size="11" fill="#5b6472">two judges + agreement</text>
+  <text x="271" y="632" font-size="11.5" fill="#1f2937">4 · escalation precision / recall</text>
+  <text x="619" y="632" text-anchor="end" font-size="11" fill="#5b6472">deterministic</text>
+
+  <!-- harness → dynamodb (results) -->
+  <path d="M 612 510 L 612 462" stroke="#b4531a" stroke-width="1.5" fill="none" marker-end="url(#arrow-accent)"/>
+  <text x="622" y="490" font-size="10.5" fill="#8a3f14">per-case results</text>
+
+  <!-- harness → lambda code path (replay) -->
+  <path d="M 255 566 L 200 566 L 200 228 L 250 228" stroke="#b4531a" stroke-width="1.5" fill="none" stroke-dasharray="5 3" marker-end="url(#arrow-accent)"/>
+  <text x="192" y="196" text-anchor="end" font-size="10.5" fill="#8a3f14">replays the same loop,</text>
+  <text x="192" y="210" text-anchor="end" font-size="10.5" fill="#8a3f14">the same tools</text>
+
+  <!-- ================= alarms ================= -->
+  <rect x="690" y="510" width="280" height="130" rx="8" fill="#ffffff" stroke="#b4531a" stroke-width="2"/>
+  <text x="830" y="534" text-anchor="middle" font-size="14" font-weight="600" fill="#8a3f14">CloudWatch alarms</text>
+  <text x="706" y="556" font-size="11.5" fill="#5b6472">Lambda errors</text>
+  <text x="954" y="556" text-anchor="end" font-size="10.5" fill="#8b94a3">operational</text>
+  <text x="706" y="574" font-size="11.5" fill="#5b6472">failed tool calls</text>
+  <text x="954" y="574" text-anchor="end" font-size="10.5" fill="#8b94a3">operational</text>
+  <text x="706" y="592" font-size="11.5" font-weight="600" fill="#8a3f14">tool selection &lt; 0.85</text>
+  <text x="954" y="592" text-anchor="end" font-size="10.5" fill="#8a3f14">quality</text>
+  <text x="706" y="610" font-size="11.5" font-weight="600" fill="#8a3f14">false-page rate &gt; 0.10</text>
+  <text x="954" y="610" text-anchor="end" font-size="10.5" fill="#8a3f14">quality</text>
+
+  <!-- harness → alarms -->
+  <line x1="635" y1="566" x2="686" y2="566" stroke="#b4531a" stroke-width="1.5" marker-end="url(#arrow-accent)"/>
+  <text x="660" y="558" text-anchor="middle" font-size="10" fill="#8a3f14">scores</text>
+
+  <!-- alarms → sns -->
+  <path d="M 890 510 L 890 422" stroke="#b4531a" stroke-width="1.5" fill="none" marker-end="url(#arrow-accent)"/>
+  <text x="878" y="470" text-anchor="end" font-size="10.5" fill="#8a3f14">a quality regression pages</text>
+  <text x="878" y="484" text-anchor="end" font-size="10.5" fill="#8a3f14">like a latency one does</text>
+
+</svg>

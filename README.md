@@ -15,53 +15,11 @@ a number is not.
 
 ## Architecture
 
-```
-  POST /alert
-      │
-      ▼
-┌──────────────────┐
-│  API Gateway     │  HTTP API — one route, one integration (D-02)
-│  (HTTP API v2)   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────────────────────┐
-│  Lambda: triage-agent            │  python3.12 · 512MB · 120s
-│  ┌────────────────────────────┐  │  IAM role scoped by hand (D-34)
-│  │ Bedrock Converse loop      │  │
-│  │  model ⇄ tools, max 8      │  │
-│  └────────────────────────────┘  │
-└──┬───────┬───────┬───────┬───────┘
-   │       │       │       │
-   │       │       │       └──────────────────────┐
-   ▼       ▼       ▼                              ▼
-┌────────┐ ┌────────────┐ ┌──────────────┐ ┌────────────┐
-│Bedrock │ │ CloudWatch │ │  DynamoDB    │ │    SNS     │
-│Converse│ │ GetMetric  │ │  single      │ │  paging    │
-│+ tools │ │ Statistics │ │  table       │ │  topic     │
-│        │ │ (a TOOL)   │ │              │ │            │
-└────────┘ └────────────┘ │ runbooks     │ └────────────┘
-                          │ deploys      │
-                          │ incidents ◄──┼── conditional write
-                          │ eval_runs    │    dedupes storms (D-07)
-                          └──────┬───────┘
-                                 ▲
-                    ┌────────────┴─────────────┐
-                    │ Eval harness             │  38 cases · 4 metrics
-                    │ python -m eval.run       │  scores → CloudWatch
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │ CloudWatch alarms        │
-                    │  · Lambda errors         │
-                    │  · tool failures         │
-                    │  · tool selection < 0.85 │  ← agent quality
-                    │  · false-page rate > 0.10│     alarms like
-                    └──────────────────────────┘     latency does (D-38)
-```
+![Architecture: an alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. An evaluation harness replays 38 alerts through the same loop, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch.](docs/architecture.svg)
 
-Every arrow has a reason. `docs/decisions.md` covers the five most arguable;
+Every arrow has a reason — if an interviewer asks "why ECS for the eval runner?",
+the answer is that a sweep over 38 alerts takes longer than Lambda's 15-minute
+ceiling. `docs/decisions.md` covers the five most arguable decisions;
 `docs/DESIGN_DECISIONS.md` covers all 42.
 
 ### The agent's five tools
