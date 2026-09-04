@@ -324,7 +324,7 @@ class TestOfflineBackends:
         from boto3.dynamodb.conditions import Key
 
         cfg = Config(region=REGION, table_name="t", dry_run=True)
-        case = [c for c in all_cases if c["scenario"].get("deploys")][0]
+        case = next(c for c in all_cases if c["scenario"].get("deploys"))
         with backend_mod.offline_backends([case], cfg=cfg, bedrock=None) as bk:
             runbooks = bk.ddb.query(KeyConditionExpression=Key("PK").eq("RUNBOOK"))
             assert len(runbooks["Items"]) == len(__import__("eval.world", fromlist=["x"]).RUNBOOKS)
@@ -337,7 +337,6 @@ class TestOfflineBackends:
     def test_each_context_starts_from_a_clean_table(self, all_cases):
         """Otherwise incidents from a previous run dedupe against this one and
         the sweep silently stops opening incidents."""
-        from boto3.dynamodb.conditions import Key
 
         cfg = Config(region=REGION, table_name="t", dry_run=True)
         for _ in range(2):

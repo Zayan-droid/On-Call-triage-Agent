@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 676" width="1000" height="676" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 762" width="1000" height="762" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
   <title>On-Call Triage Agent architecture</title>
-  <desc>An alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. An evaluation harness replays 38 alerts, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch.</desc>
+  <desc>An alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. The same agent package also runs as a container on Bedrock AgentCore Runtime, reached by SigV4 with no public URL. An evaluation harness replays 38 alerts through the same loop, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch; a full sweep runs as an ECS Fargate task because it outlives Lambda's fifteen-minute ceiling.</desc>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -13,12 +13,28 @@
 
   <!-- Explicit light ground: GitHub renders this in both themes, and a
        transparent background would leave dark text on a dark page. -->
-  <rect width="1000" height="676" fill="#fbfbfa"/>
+  <rect width="1000" height="762" fill="#fbfbfa"/>
 
-  <!-- ================= entry ================= -->
+  <!-- ================= entry: the alerting webhook ================= -->
   <rect x="380" y="20" width="240" height="40" rx="20" fill="#eef1f5" stroke="#a9b2bf"/>
   <text x="500" y="45" text-anchor="middle" font-size="14" fill="#1f2937" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">POST /alert</text>
   <line x1="500" y1="60" x2="500" y2="88" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= entry: the second deployment target ================= -->
+  <rect x="700" y="20" width="270" height="40" rx="20" fill="#eef1f5" stroke="#a9b2bf"/>
+  <text x="835" y="45" text-anchor="middle" font-size="12.5" fill="#1f2937" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">invoke-agent-runtime</text>
+  <line x1="835" y1="60" x2="835" y2="88" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="700" y="90" width="270" height="56" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
+  <text x="835" y="112" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Bedrock AgentCore Runtime</text>
+  <text x="835" y="131" text-anchor="middle" font-size="10.5" fill="#5b6472">arm64 container · SigV4 · no public URL</text>
+
+  <!-- Dashed, like the harness link below, because this is a "runs the same
+       code" relationship and not an invocation. AgentCore does not call the
+       Lambda; it runs the same agent/ package behind an HTTP transport. -->
+  <path d="M 835 146 L 835 238 L 736 238" stroke="#5b6472" stroke-width="1.5" fill="none" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <text x="846" y="190" font-size="10.5" fill="#5b6472">the same agent/</text>
+  <text x="846" y="203" font-size="10.5" fill="#5b6472">package, over HTTP</text>
 
   <!-- ================= api gateway ================= -->
   <rect x="360" y="90" width="280" height="56" rx="8" fill="#ffffff" stroke="#7c8797" stroke-width="1.5"/>
@@ -122,5 +138,15 @@
   <path d="M 890 510 L 890 422" stroke="#b4531a" stroke-width="1.5" fill="none" marker-end="url(#arrow-accent)"/>
   <text x="878" y="470" text-anchor="end" font-size="10.5" fill="#8a3f14">a quality regression pages</text>
   <text x="878" y="484" text-anchor="end" font-size="10.5" fill="#8a3f14">like a latency one does</text>
+
+  <!-- ================= ecs fargate ================= -->
+  <!-- The one box on this diagram that exists because of a hard limit rather
+       than a preference: a full sweep takes longer than Lambda can run. -->
+  <rect x="255" y="664" width="380" height="80" rx="8" fill="#ffffff" stroke="#b4531a" stroke-width="2"/>
+  <text x="445" y="688" text-anchor="middle" font-size="14" font-weight="600" fill="#8a3f14">ECS Fargate — batch eval runner</text>
+  <text x="445" y="707" text-anchor="middle" font-size="11" fill="#5b6472">a 38-case sweep outlives Lambda's 15-minute ceiling</text>
+  <text x="445" y="724" text-anchor="middle" font-size="11" fill="#5b6472">task role ≠ execution role</text>
+  <text x="445" y="738" text-anchor="middle" font-size="10.5" fill="#8a3f14">no sns:Publish, so a batch sweep cannot page anyone</text>
+  <line x1="445" y1="664" x2="445" y2="644" stroke="#b4531a" stroke-width="1.5" marker-end="url(#arrow-accent)"/>
 
 </svg>

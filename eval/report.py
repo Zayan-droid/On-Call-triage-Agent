@@ -120,8 +120,10 @@ def render_run(payload: dict, markdown: bool = False) -> str:
         ("   False-page rate", fmt(esc["false_page_rate"])),
         ("   Missed-page rate", fmt(esc["missed_page_rate"])),
         (
-            f"   Weighted cost (miss x{fmt(esc['weights']['miss'], 0)}, "
-            f"false x{fmt(esc['weights']['false_page'], 0)})",
+            (
+                f"   Weighted cost (miss x{fmt(esc['weights']['miss'], 0)}, "
+                f"false x{fmt(esc['weights']['false_page'], 0)})"
+            ),
             fmt(esc["weighted_cost"]),
         ),
         ("   Confusion TP/FP/TN/FN", f"{esc['tp']}/{esc['fp']}/{esc['tn']}/{esc['fn']}"),
@@ -145,8 +147,10 @@ def render_run(payload: dict, markdown: bool = False) -> str:
             fmt(stats["tool_selection_exact"], 2),
             fmt(stats["tool_parameter_accuracy"], 2),
             fmt(stats["groundedness"], 2),
-            f"{stats['escalation']['tp']}/{stats['escalation']['fp']}/"
-            f"{stats['escalation']['tn']}/{stats['escalation']['fn']}",
+            (
+                f"{stats['escalation']['tp']}/{stats['escalation']['fp']}/"
+                f"{stats['escalation']['tn']}/{stats['escalation']['fn']}"
+            ),
             fmt(stats["escalation"]["false_page_rate"], 2),
         )
         for bucket, stats in payload["summary"]["by_bucket"].items()
@@ -325,7 +329,7 @@ def main(argv: list[str] | None = None) -> int:
         for run in runs:
             meta = run["meta"]
             print(
-                f"{meta['run_id']:<24}{str(meta.get('suite')):<28}{meta['mode']:<9}"
+                f"{meta['run_id']:<24}{meta.get('suite')!s:<28}{meta['mode']:<9}"
                 f"{run['summary']['overall']['n']:>4}  {meta['model_id']}"
             )
         return 0

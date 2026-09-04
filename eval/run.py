@@ -57,8 +57,8 @@ def load_cases(path: Path) -> list[dict]:
     cases: list[dict] = []
     seen: set[str] = set()
     with path.open(encoding="utf-8") as handle:
-        for lineno, line in enumerate(handle, start=1):
-            line = line.strip()
+        for lineno, raw_line in enumerate(handle, start=1):
+            line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue
             try:
@@ -70,7 +70,7 @@ def load_cases(path: Path) -> list[dict]:
                 if field not in case:
                     raise ValueError(f"{path}:{lineno} case is missing '{field}'")
             if not isinstance(case["expected_page"], bool):
-                raise ValueError(
+                raise ValueError(  # noqa: TRY004 - a bad dataset is a value error
                     f"{path}:{lineno} case {case['id']}: expected_page must be true or false, "
                     f"got {case['expected_page']!r}"
                 )
@@ -146,7 +146,7 @@ def write_results_dynamo(table: Any, run_id: str, payload: dict) -> int:
                     "SK": "SUMMARY",
                     "entity": "eval_run",
                     "run_id": run_id,
-                    **{k: v for k, v in payload["meta"].items()},
+                    **payload["meta"],
                     "summary": payload["summary"]["overall"],
                     "by_bucket": payload["summary"]["by_bucket"],
                     "ttl": int(time.time()) + 90 * 86400,
@@ -283,7 +283,7 @@ def run_sweep(
             print(
                 f"  [{index:>2}/{len(cases)}] {case['id']:<20} "
                 f"{score.decision:<14} {mark:<11} "
-                f"tools={score.tool_selection['exact_match'] and 'ok' or 'MISS'} "
+                f"tools={(score.tool_selection['exact_match'] and 'ok') or 'MISS'} "
                 f"ground={'n/a' if grounded is None else f'{grounded:.2f}'} "
                 f"{(time.perf_counter() - started) * 1000:.0f}ms",
                 flush=True,

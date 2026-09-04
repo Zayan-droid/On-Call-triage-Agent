@@ -14,3 +14,13 @@
 *.py text
 *.md text
 *.json text
+
+# A Dockerfile with CRLF breaks line continuations inside RUN, and the shell
+# inside the container then receives a trailing carriage return as part of the
+# last argument. Same class of failure as the shell scripts above.
+Dockerfile* text eol=lf
+.dockerignore text eol=lf
+
+# GitHub Actions parses YAML fine either way, but the run: blocks are shell.
+*.yml text eol=lf
+*.yaml text eol=lf

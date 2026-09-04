@@ -1,0 +1,45 @@
+{
+  "family": "${ECS_TASK_FAMILY}",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ECS_EXECUTION_ROLE_NAME}",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ECS_TASK_ROLE_NAME}",
+  "containerDefinitions": [
+    {
+      "name": "eval-runner",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}",
+      "essential": true,
+      "readonlyRootFilesystem": false,
+      "command": [
+        "--mode", "aws",
+        "--judge", "both",
+        "--write-dynamo",
+        "--emit-metrics",
+        "--quiet"
+      ],
+      "environment": [
+        { "name": "AWS_REGION", "value": "${AWS_REGION}" },
+        { "name": "TRIAGE_TABLE_NAME", "value": "${TABLE_NAME}" },
+        { "name": "TRIAGE_MODEL_ID", "value": "${MODEL_ID}" },
+        { "name": "TRIAGE_PROMPT_VARIANT", "value": "${PROMPT_VARIANT}" },
+        { "name": "TRIAGE_SERVICE_METRICS_NAMESPACE", "value": "${SERVICE_METRICS_NAMESPACE}" },
+        { "name": "TRIAGE_LOG_LEVEL", "value": "INFO" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${ECS_TASK_FAMILY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "eval",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

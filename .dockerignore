@@ -1,0 +1,34 @@
+# Keep the build context small and free of anything secret. Every file here
+# would otherwise be sent to the Docker daemon, land in a layer, and ship to
+# ECR -- including credentials and a 200MB virtualenv.
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.zip
+
+# Never bake credentials into an image.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+
+# Full run payloads are ~800KB each and mean nothing inside the container.
+eval/results/*.json
+
+# Documentation is not needed at runtime.
+docs/
+*.md
+!README.md

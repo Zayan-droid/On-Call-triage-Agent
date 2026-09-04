@@ -23,8 +23,8 @@ os.environ.setdefault("AWS_SESSION_TOKEN", "testing")
 os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 os.environ.setdefault("TRIAGE_LOG_LEVEL", "ERROR")
 
-from agent.config import Config  # noqa: E402
-from agent.tools import ToolContext  # noqa: E402
+from agent.config import Config
+from agent.tools import ToolContext
 
 TABLE = "triage-agent-test"
 REGION = "us-east-1"

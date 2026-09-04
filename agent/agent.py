@@ -33,7 +33,7 @@ from typing import Any
 from agent import prompts
 from agent.config import Config
 from agent.obs import log_error, log_info, log_warn
-from agent.tools import TOOL_NAMES, ToolCall, ToolContext, dispatch, tool_config
+from agent.tools import ToolCall, ToolContext, dispatch, tool_config
 
 # Bedrock errors that are worth trying again. Anything else is a bug in our
 # request and will fail identically on every retry.
@@ -229,7 +229,7 @@ def _converse(
     sleeper: Any = time.sleep,
     rng: Any = None,
 ) -> dict:
-    rng = rng or random.Random()
+    rng = rng or random.Random()  # noqa: S311 - retry jitter, not a secret
     kwargs: dict[str, Any] = {
         "modelId": model_id,
         "system": system,

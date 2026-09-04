@@ -22,7 +22,6 @@ from eval.fake_bedrock import (
     POLICY_PHANTOM_INCIDENT,
     POLICY_TRIGGER_HAPPY,
     ScriptedBedrock,
-    ThrottlingException,
 )
 
 
@@ -256,7 +255,7 @@ class TestRetry:
                 error.response = {"Error": {"Code": "ValidationException"}}
                 raise error
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="bad request"):
             _converse(
                 Client(),
                 model_id="m",

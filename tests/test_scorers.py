@@ -8,6 +8,8 @@ are the ways an eval reports a confident number that means the wrong thing.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 
 from agent.tools import ToolCall
@@ -24,7 +26,7 @@ def call(name, **arguments):
 
 
 class TestToolSelection:
-    CASE = {"expected_tools": ["get_service_metrics", "get_recent_deploys"]}
+    CASE: ClassVar[dict] = {"expected_tools": ["get_service_metrics", "get_recent_deploys"]}
 
     def test_exact_match_when_all_required_are_called(self):
         score = scorers.score_tool_selection(
@@ -95,7 +97,7 @@ class TestToolSelection:
 
 
 class TestToolParameters:
-    CASE = {
+    CASE: ClassVar[dict] = {
         "expected_tools": ["get_service_metrics"],
         "expected_params": {
             "get_service_metrics": {

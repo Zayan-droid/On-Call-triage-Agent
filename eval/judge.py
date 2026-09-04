@@ -357,11 +357,11 @@ def compact_trace(result: Any, max_datapoints: int = 6) -> list[dict]:
         points = payload.get("datapoints")
         if isinstance(points, list) and len(points) > max_datapoints:
             head = max_datapoints // 2
-            payload["datapoints"] = (
-                points[:head]
-                + [{"note": f"...{len(points) - max_datapoints} datapoints omitted..."}]
-                + points[-(max_datapoints - head) :]
-            )
+            payload["datapoints"] = [
+                *points[:head],
+                {"note": f"...{len(points) - max_datapoints} datapoints omitted..."},
+                *points[-(max_datapoints - head) :],
+            ]
         entry["result"] = payload
         compact.append(entry)
     return compact

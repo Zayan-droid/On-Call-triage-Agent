@@ -21,8 +21,9 @@ regression indistinguishable from a reroll.
 from __future__ import annotations
 
 import random
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Any, Iterable
+from typing import Any
 
 # Every shape is a claim about what an operator would see on the graph. The
 # names are the vocabulary the dataset uses, so adding one here is how you add a
@@ -52,7 +53,9 @@ def _series(shape: str, normal: float, peak: float, points: int, rng: random.Ran
     """Generate `points` values, oldest first."""
     if points <= 0:
         return []
-    jitter = lambda v: max(0.0, v + rng.uniform(-0.03, 0.03) * max(abs(v), 1.0))
+    def jitter(v: float) -> float:
+        """+/-3% noise, floored at zero. No metric here can go negative."""
+        return max(0.0, v + rng.uniform(-0.03, 0.03) * max(abs(v), 1.0))
 
     if shape == "no_data":
         return []
@@ -138,8 +141,11 @@ def metric_datapoints(
     quiet_points = total_points - active_points
 
     # Seed from case id + metric name: stable across runs, different per series.
-    rng = random.Random(f"{case_id}:{metric}")
-    quiet = [max(0.0, normal + rng.uniform(-0.03, 0.03) * max(abs(normal), 1.0)) for _ in range(quiet_points)]
+    rng = random.Random(f"{case_id}:{metric}")  # noqa: S311 - reproducible fixtures, not secrets
+    quiet = [
+        max(0.0, normal + rng.uniform(-0.03, 0.03) * max(abs(normal), 1.0))
+        for _ in range(quiet_points)
+    ]
     active = _series(shape, normal, peak, active_points, rng)
 
     values = quiet + active

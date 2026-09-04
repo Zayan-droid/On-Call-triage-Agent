@@ -1,0 +1,94 @@
+# Project metadata and tooling configuration.
+#
+# There is no build backend here on purpose: nothing in this repository is
+# installed as a package. `agent/` is zipped and uploaded to Lambda, `eval/` is
+# run with `python -m`, and both are imported from the repository root. Adding a
+# build system would mean maintaining packaging metadata that nothing consumes.
+#
+# What this file is actually for is pinning the lint gate. `ruff` was already a
+# declared dev dependency, and a linter that ships in requirements but has no
+# configuration lints against whatever ruleset the installed version happens to
+# default to -- which changes between releases. That makes CI non-reproducible:
+# the same commit passes today and fails after an unrelated `pip install -U`.
+# The rule selection below is therefore explicit rather than inherited.
+
+[project]
+name = "oncall-triage-agent"
+version = "1.0.0"
+description = "Tool-using triage agent on Amazon Bedrock, plus the harness that scores it"
+requires-python = ">=3.12"
+
+[tool.ruff]
+# 100 rather than the default 88. The codebase is hand-wrapped, and comments
+# here carry real explanation rather than restating the code, so a narrower
+# limit would break prose mid-sentence for no benefit.
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "build", "eval/results"]
+
+[tool.ruff.lint]
+# Explicitly selected. Each family is here because it catches a class of bug
+# this project can actually have.
+select = [
+    "F",                  # pyflakes -- unused imports, undefined names
+    "E4", "E7", "E9",     # pycodestyle errors, minus E501 (line length is handled above)
+    "W",                  # pycodestyle warnings
+    "I",                  # import sorting
+    "UP",                 # pyupgrade
+    "B",                  # bugbear -- mutable defaults, loop-variable capture
+    "C4",                 # comprehension clarity
+    "DTZ",                # naive datetimes: this project reasons about time windows
+    "ISC",                # implicit string concatenation (a missing comma looks like this)
+    "PIE",                # misc lints
+    "S",                  # bandit -- security
+    "BLE",                # blind except
+    "TRY",                # exception antipatterns
+    "RUF",                # ruff's own
+    "FURB",               # modernisations
+    "PLE", "PLW",         # pylint errors and warnings
+    "LOG", "G",           # logging antipatterns
+    "T10",                # a forgotten breakpoint()
+    "RSE",                # raise syntax
+    "EXE",                # shebang / executable-bit mismatches
+]
+
+ignore = [
+    # Messages are written inline at the raise site on purpose. Every exception
+    # this project raises is read by a human debugging a failed run, and
+    # hoisting the text into a custom exception class to satisfy TRY003 moves
+    # the explanation away from the condition that produced it.
+    "TRY003",
+    # `timezone.utc` over `datetime.UTC`. Both are correct on 3.12; the former
+    # is used consistently throughout and reads unambiguously next to the
+    # `timezone` import it comes from.
+    "UP017",
+    # Blind `except Exception` is an architectural decision here, not an
+    # oversight, and it appears at exactly three kinds of boundary:
+    #   * telemetry (agent/obs.py) -- a metric that fails to publish must never
+    #     take down the triage it was measuring;
+    #   * tool dispatch and the Converse loop -- a broken tool degrades the
+    #     investigation and is reported as a failed call, rather than 500ing;
+    #   * the Lambda entrypoint -- which logs a traceback and returns 500.
+    # Each one has a test asserting the degraded path. Narrowing them to
+    # specific exception types would mean guessing every failure mode boto3 has.
+    "BLE001",
+    # `raise ... within try` -- flagged where validation raises inside a block
+    # that also catches, which is the clearest way to write those two functions.
+    "TRY301",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",    # tests are made of asserts
+    "S105",    # hardcoded "password"-looking strings are fixture API keys
+    "S311",    # random is used to build fixtures, not secrets
+    "S603",    # subprocess calls run bash on checked-in scripts, not user input
+    "SLF001",  # a test may reach into a private helper to pin its contract
+    "PT006",   # parametrize names as a single comma-joined string reads fine
+    "PT011",   # a broad pytest.raises is sometimes exactly the assertion
+    "PT018",   # composite asserts are readable in the small
+    "DTZ001", "DTZ005",  # naive datetimes are legitimate fixtures
+]
+"infra/seed_data.py" = [
+    "S101",    # one invariant assert guarding a destructive write
+]

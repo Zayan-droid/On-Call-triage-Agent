@@ -354,8 +354,10 @@ def _require_int(args: dict, key: str, low: int, high: int) -> int:
     if isinstance(value, str):
         try:
             value = int(float(value.strip()))
-        except ValueError:
-            raise ToolInputError(f"Argument '{key}' must be an integer, got '{value}'.")
+        except ValueError as exc:
+            raise ToolInputError(
+                f"Argument '{key}' must be an integer, got '{value}'."
+            ) from exc
     elif isinstance(value, float):
         if value != int(value):
             raise ToolInputError(f"Argument '{key}' must be a whole number, got {value}.")
@@ -627,8 +629,8 @@ def get_recent_deploys(ctx: ToolContext, args: dict) -> dict:
     )
 
     deploys = []
-    for item in response.get("Items", []):
-        item = _to_native(item)
+    for raw_item in response.get("Items", []):
+        item = _to_native(raw_item)
         deployed_at = item.get("deployed_at") or item.get("SK", "")
         minutes_ago = None
         try:
@@ -695,8 +697,8 @@ def search_runbook(ctx: ToolContext, args: dict) -> dict:
     query_tokens = _tokenise(symptom)
 
     scored = []
-    for item in response.get("Items", []):
-        item = _to_native(item)
+    for raw_item in response.get("Items", []):
+        item = _to_native(raw_item)
         keywords = {str(k).lower() for k in (item.get("keywords") or [])}
         title_tokens = _tokenise(item.get("title", ""))
         symptom_tokens = _tokenise(item.get("symptom", ""))

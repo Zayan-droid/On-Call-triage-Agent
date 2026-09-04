@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -87,7 +86,7 @@ def extract_body(event: dict) -> dict:
     try:
         parsed = json.loads(body)
     except json.JSONDecodeError as exc:
-        raise BadRequest(f"Body is not valid JSON: {exc.msg} at position {exc.pos}.")
+        raise BadRequest(f"Body is not valid JSON: {exc.msg} at position {exc.pos}.") from exc
 
     if not isinstance(parsed, dict):
         raise BadRequest("Body must be a JSON object, not a list or scalar.")
@@ -129,8 +128,8 @@ def _coerce_number(value: Any, field: str) -> float | None:
     if isinstance(value, str):
         try:
             return float(value.strip())
-        except ValueError:
-            raise BadRequest(f"Field '{field}' must be a number, got '{value}'.")
+        except ValueError as exc:
+            raise BadRequest(f"Field '{field}' must be a number, got '{value}'.") from exc
     raise BadRequest(f"Field '{field}' must be a number, got {type(value).__name__}.")
 
 

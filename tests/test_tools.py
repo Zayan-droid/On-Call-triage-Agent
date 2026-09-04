@@ -8,18 +8,14 @@ test in the suite anyway.
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 import pytest
 
 from agent import tools
 from agent.tools import (
-    ToolInputError,
     alert_fingerprint,
     dispatch,
     normalise_metric,
 )
-
 
 # --------------------------------------------------------------------------
 # Argument validation
@@ -440,7 +436,7 @@ class TestDeserialiseItem:
     def test_passes_through_already_deserialised_items(self):
         from decimal import Decimal
 
-        plain = {"incident_id": "INC-1", "opened_at_epoch": Decimal("1000")}
+        plain = {"incident_id": "INC-1", "opened_at_epoch": Decimal(1000)}
         assert tools.deserialise_item(plain) == {
             "incident_id": "INC-1",
             "opened_at_epoch": 1000,

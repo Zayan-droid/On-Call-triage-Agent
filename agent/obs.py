@@ -27,8 +27,9 @@ import os
 import sys
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 _LEVELS = {"DEBUG": 10, "INFO": 20, "WARN": 30, "WARNING": 30, "ERROR": 40}
 
@@ -48,7 +49,7 @@ def _default(obj: Any) -> str:
 
         if isinstance(obj, Decimal):
             return str(obj)
-    except Exception:  # pragma: no cover - defensive
+    except Exception:  # pragma: no cover  # noqa: S110 - a log line must not raise
         pass
     if hasattr(obj, "isoformat"):
         return obj.isoformat()
@@ -64,7 +65,7 @@ def _write(payload: dict) -> None:
     except Exception:  # pragma: no cover - defensive
         try:
             sys.stdout.write('{"level":"ERROR","event":"log_serialisation_failed"}\n')
-        except Exception:
+        except Exception:  # pragma: no cover  # noqa: S110 - stdout is gone; nowhere to report
             pass
 
 

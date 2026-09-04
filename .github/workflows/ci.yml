@@ -1,0 +1,193 @@
+name: CI
+
+# Every job here runs offline. There are no AWS credentials in this repository
+# and none are needed: the test suite uses moto, and the eval harness has an
+# offline mode with a scripted model. That is a deliberate property rather than
+# a convenience -- a CI pipeline that needs a live account is a pipeline that
+# fails for reasons unrelated to the commit, and one that needs long-lived keys
+# in secrets is a credential nobody rotates.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # So a stale dependency shows up on its own rather than in the middle of
+  # someone else's pull request.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      # The rule selection lives in pyproject.toml, so this is reproducible
+      # rather than whatever the installed ruff happens to default to.
+      - run: ruff check --output-format=github .
+
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # 3.12 because that is the Lambda runtime. Testing on anything else
+          # would be testing a different interpreter than the one that ships.
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Run the suite with a coverage floor
+        run: |
+          pytest -q --cov=agent --cov=eval --cov-report=term --cov-fail-under=90
+      - name: Upload the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: .coverage
+          include-hidden-files: true
+          retention-days: 7
+
+  harness:
+    name: eval harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+
+      # A full offline sweep. The unit tests cover the scorers in isolation;
+      # this covers the thing they add up to, which is the part that actually
+      # produces a number someone might quote.
+      - name: Full offline sweep
+        run: python -m eval.run --tag ci --quiet
+
+      # The harness has to detect a bad agent, not just score a good one. Each
+      # broken policy must fail on the metric built to catch it -- asserted in
+      # tests/test_harness_e2e.py, and run here end to end as well.
+      - name: Prove the harness catches a broken agent
+        run: |
+          python -m eval.run --policy hallucinator --tag ci-hallucinator --quiet
+          python -m eval.run --policy trigger_happy --tag ci-trigger-happy --quiet
+
+      # The experiment itself, reproduced from scratch on every run. If a
+      # refactor changes the measured effect of the prompt, that is the single
+      # most important regression this project can have, and the README quotes
+      # the number.
+      - name: Reproduce the prompt experiment
+        run: |
+          python -m eval.run --policy prompt_sensitive --prompt-variant v1_baseline \
+            --tag ci-baseline --quiet
+          python -m eval.run --policy prompt_sensitive --prompt-variant v2_investigate_first \
+            --tag ci-treatment --quiet
+          python -m eval.report --compare ci-baseline ci-treatment
+
+  shell:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      # The deploy scripts are the part of this repository that cannot be unit
+      # tested against a real account, so static analysis is what is left.
+      # shellcheck comes from requirements-dev rather than the runner image, so
+      # the version gating a pull request is the one a developer runs locally.
+      - run: pip install -r requirements-dev.txt
+      - name: Parse
+        run: |
+          bash -n infra/setup.sh
+          bash -n infra/teardown.sh
+      - name: shellcheck
+        run: shellcheck --severity=warning infra/setup.sh infra/teardown.sh
+      - name: Help must never touch AWS
+        # A setup script that acts on an empty argument list is one stray Enter
+        # away from a surprise bill.
+        run: |
+          bash infra/setup.sh | grep -q "Usage:"
+          bash infra/teardown.sh | grep -q "Usage:"
+
+  images:
+    name: docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        with:
+          # Needed to build the arm64 AgentCore image on an x86 runner.
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the eval runner image (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.eval-runner
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: triage-eval-runner:ci
+
+      - name: The eval runner must answer --help without AWS
+        # Proves the image's entrypoint and imports are intact. A broken import
+        # in the image otherwise surfaces twenty minutes into a Fargate task.
+        run: docker run --rm triage-eval-runner:ci --help
+
+      - name: Build the AgentCore image (arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.agentcore
+          # AgentCore Runtime accepts linux/arm64 only and rejects an amd64
+          # image with an error that never mentions architecture. Building it
+          # here is how that stays true.
+          platforms: linux/arm64
+          push: false
+          load: true
+          tags: triage-agentcore:ci
+
+      - name: The AgentCore container must pass its own health check
+        # The same GET /ping that AgentCore polls. A container that fails this
+        # is replaced by the runtime, so it is worth knowing before deploying.
+        run: |
+          docker run -d --name agentcore -p 8080:8080 triage-agentcore:ci
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://localhost:8080/ping | grep -q Healthy; then
+              echo "healthy after ${attempt} attempt(s)"
+              docker rm -f agentcore
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "never became healthy; container logs follow:"
+          docker logs agentcore
+          docker rm -f agentcore
+          exit 1

@@ -24,8 +24,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from eval import world  # noqa: E402
-from eval.run import DEFAULT_DATASET, filter_cases, load_cases  # noqa: E402
+from eval import world
+from eval.run import DEFAULT_DATASET, filter_cases, load_cases
 
 
 def main(argv: list[str] | None = None) -> int:

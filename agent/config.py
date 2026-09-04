@@ -98,7 +98,7 @@ class Config:
     max_datapoints_returned: int = 60
 
     @classmethod
-    def from_env(cls, **overrides: Any) -> "Config":
+    def from_env(cls, **overrides: Any) -> Config:
         cfg = cls(
             region=_env("AWS_REGION", _env("AWS_DEFAULT_REGION", "us-east-1")),
             table_name=_env("TRIAGE_TABLE_NAME", "triage-agent"),

@@ -31,7 +31,12 @@ pip install -r requirements-dev.txt
 
 ## Layer 0 — the automated suite
 
-371 tests, 92% line coverage, ~90 seconds.
+439 tests, 93% line coverage, ~90 seconds. Lint and shell-lint are part of the
+gate, not a suggestion:
+
+```bash
+ruff check . && shellcheck --severity=warning infra/setup.sh infra/teardown.sh
+```
 
 ```bash
 pytest
@@ -53,8 +58,18 @@ pytest --cov=agent --cov=eval --cov-report=term-missing
 | `test_judge.py` | D-26, D-27 | both directions: catches invention, permits rounding |
 | `test_dataset.py` | D-28, D-32, D-33 | dataset integrity; the `(service, metric)` collision check |
 | `test_harness_e2e.py` | D-30 | `TestDiscrimination` — the proof the harness detects bad agents |
-| `test_infra.py` | D-34 | no wildcard actions; every ARN account-scoped |
+| `test_infra.py` | D-34, D-03, D-43 | no wildcard actions; every ARN account-scoped; the shell renderer knows every placeholder; the batch task role cannot page |
+| `test_server.py` | D-43 to D-45 | over a real socket: `/ping` touches no dependency; an oversized body is drained before it is rejected |
 | `test_cli.py` | Both entrypoints | LLM judge offline is refused, not downgraded |
+
+The one in `test_infra.py` worth reading first is
+`TestSetupRenderer::test_setup_substitutes_every_placeholder_used_anywhere`. It
+compares the `sed` expressions in `setup.sh` against every `${...}` in every
+policy file and the ECS task definition. A placeholder added to a policy but
+not to the renderer survives substitution and lands in a live IAM policy as the
+literal text `${SOMETHING}` — which is valid JSON, is accepted by AWS, and
+silently matches nothing. That failure is invisible until a permission you
+believe you granted denies something.
 
 ### Useful subsets
 
@@ -367,7 +382,58 @@ bash infra/setup.sh preflight
 
 Then one step at a time — `iam`, `sns`, `dynamodb`, `package`, `lambda`, `api`,
 `seed`, `alarms`, `smoke`. Each is idempotent, so a failed step can simply be
-re-run after you fix the cause.
+re-run after you fix the cause. `bash infra/setup.sh` with no arguments lists
+all 17 steps across the three deploy targets.
+
+### The container targets, and what to check about each
+
+Both need Docker and are outside `all`, so they are opt-in:
+
+```bash
+bash infra/setup.sh ecs_all && bash infra/setup.sh evalrun
+```
+
+```bash
+bash infra/setup.sh agentcore_all
+```
+
+Three things worth verifying by hand rather than trusting:
+
+**The Fargate task really cannot page.** Its task role has no `sns:Publish`, so
+forcing the issue should fail rather than send 19 emails. `bash infra/setup.sh
+evalrun` prints the exact `awsvpcConfiguration=...` string it used — paste that
+in as `NET`:
+
+```bash
+aws ecs run-task --cluster triage-eval --task-definition triage-eval-runner \
+  --launch-type FARGATE --network-configuration "$NET" \
+  --overrides '{"containerOverrides":[{"name":"eval-runner","command":["--mode","aws","--send-pages","--limit","1"]}]}'
+```
+
+The run should reach the page and get `AccessDeniedException` from SNS, which
+the tool records as a failed call. If a page arrives in your inbox, the
+permission boundary is wider than the policy file claims.
+
+**The AgentCore health check must not call a dependency.** Break Bedrock access
+for the runtime role, then poll `/ping`. It must still answer `Healthy`:
+AgentCore replaces a container that fails its health check, so a `/ping` that
+verified Bedrock would answer a throttle by killing a working agent, then
+killing its replacement (D-44).
+
+**The two deployments must agree.** Send the same alert to both and diff the
+decision:
+
+```bash
+curl -sS -X POST "$API_URL/alert" -H 'content-type: application/json' \
+  -d '{"service":"checkout-api","metric":"Error5xxRate","value":8.4,"threshold":1.0,"duration_min":14}' | jq .decision
+```
+
+```bash
+bash infra/setup.sh agentcore_invoke | jq .decision
+```
+
+They run the same modules, so a difference is a transport bug and nothing else —
+that is the whole reason `agent/server.py` contains no validation of its own.
 
 ### Verify IAM is actually tight — remove a permission and watch it fail
 
@@ -471,9 +537,22 @@ one flipped case moves the false-page rate by 0.053.
 bash infra/teardown.sh all
 ```
 
+One confirmation, then deletes in dependency order: the AgentCore runtime and
+the ECS task definition go before the image repositories they point at.
+
 Custom metrics cannot be deleted; they stop billing once nothing publishes and
 expire after 15 months. `bash infra/teardown.sh metrics` shows how many series
-exist.
+exist. Then confirm nothing survived — ECR repositories holding images and an
+AgentCore runtime are the two things here that keep costing after everything
+visible is gone:
+
+```bash
+aws ecr describe-repositories --query 'repositories[].repositoryName'
+```
+
+```bash
+aws bedrock-agentcore-control list-agent-runtimes --query 'agentRuntimes[].agentRuntimeName'
+```
 
 ---
 
@@ -520,6 +599,14 @@ comparison whose delta is under ~0.1 is inside the noise.
   rate is a consistency check, not a correctness one.
 - `expected_tools` encodes one person's view of the minimum investigation. An
   agent doing something reasonable but unanticipated scores badly for it (D-20).
+- One deploy call has never run against a live account: `create-agent-runtime`
+  (D-43). The image is built and health-checked in CI, and the role, the server
+  contract and the teardown are tested — but that single API call is unverified,
+  and the step fails with an explanation rather than a stack trace if the
+  installed AWS CLI predates the API.
+- The Fargate sweep assigns a public IP rather than using a NAT gateway or VPC
+  endpoints, on cost grounds (D-03). The task has no inbound rules, but this is
+  the choice most obviously wrong for production.
 
 ---
 

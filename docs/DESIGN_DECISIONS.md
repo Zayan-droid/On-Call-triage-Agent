@@ -3,7 +3,7 @@
 Every decision of consequence in this project, why it was made, what was
 rejected, and what it costs. Code comments reference these by id (`D-07`).
 
-`docs/decisions.md` is the five-paragraph version for someone with two minutes.
+`docs/decisions.md` is the six-paragraph version for someone with two minutes.
 This is the long version. `docs/TESTING_GUIDE.md` says how to attack each of
 these and find out whether it holds.
 
@@ -19,6 +19,7 @@ a decision that wasn't made.
 - [The agent](#the-agent) — D-09 to D-19
 - [The evaluation harness](#the-evaluation-harness) — D-20 to D-33
 - [Operations and security](#operations-and-security) — D-34 to D-42
+- [Deployment targets](#deployment-targets) — D-43 to D-46
 - [Decisions deliberately deferred](#decisions-deliberately-deferred)
 
 ---
@@ -83,9 +84,23 @@ minutes — a workaround for the wrong constraint.
 **Cost.** A container image to build and push, two IAM roles instead of one
 (task role vs task execution role), and a VPC to run in.
 
-**Status.** Designed and IAM'd, not deployed. `infra/iam-policies/eval-runner-*.json`
-are written; the task definition is not. Marked optional in the project plan and
-the sweep runs locally today with `python -m eval.run --mode aws`.
+**Built.** `infra/Dockerfile.eval-runner`, `infra/ecs-task-definition.json`,
+and the `ecr` / `image` / `ecs` / `evalrun` steps in `infra/setup.sh`. The sweep
+also still runs locally with `python -m eval.run --mode aws` -- the container is
+how it runs unattended to completion, not how it runs at all.
+
+Two things the task definition forced into the open. The container filesystem
+disappears when the task stops, so `--write-dynamo --emit-metrics` are baked
+into its command: without them a sweep burns twenty minutes and leaves nothing
+behind, and a test asserts they are still there. And the task role has no
+`sns:Publish` at all, so a batch sweep cannot page anyone even if someone passes
+`--send-pages` -- the permission boundary agrees with the flag default rather
+than trusting it.
+
+The task gets a public IP rather than a NAT gateway. Its only egress is Bedrock,
+DynamoDB, CloudWatch and ECR; a NAT gateway bills about $32/month whether or not
+a sweep ever runs, and a public IP on a task with no inbound rules costs nothing.
+VPC endpoints would be the production answer and are not free either.
 
 ---
 
@@ -911,6 +926,138 @@ needed a newer botocore, this would have to change — a layer, or bundling.
 
 ---
 
+## Deployment targets
+
+### D-43 — AgentCore Runtime as a second deployment target
+
+**Decision.** The same agent is deployed two ways: a Lambda behind API Gateway,
+and a container on Bedrock AgentCore Runtime. Both stay.
+
+**Why.** They fail differently and neither dominates. The Lambda has a public
+HTTPS endpoint, scales to zero, costs nothing idle, and is guarded by a shared
+secret this project openly calls insufficient (D-35). AgentCore has no public
+URL at all — callers use SigV4 and need `bedrock-agentcore:InvokeAgentRuntime`
+— which removes exactly that weakness and replaces "curl this URL" with "assume
+a role first". For an alerting webhook the Lambda is the right shape; for an
+agent invoked by other AWS principals, AgentCore is.
+
+What made keeping both cheap is that the second target adds one module.
+`agent/server.py` translates HTTP into the event shape `lambda_handler` already
+accepts and translates the response back. Auth, validation, the Converse loop,
+the five tools and the metrics are the same modules. There is no second
+implementation to keep in step — which is the usual reason a second deployment
+path becomes a liability rather than an option.
+
+**Rejected.** Replacing the Lambda with AgentCore — loses the public webhook,
+which is how a CloudWatch alarm actually reaches this system. Reimplementing the
+handler inside the server with FastAPI — two endpoints, one of which returns a
+constant, in exchange for ~30MB of dependencies in an image whose point is a
+small attack surface, plus a second copy of the validation rules to drift from
+the first.
+
+**Cost.** A second image to build, and an arm64 one at that (AgentCore accepts
+`linux/arm64` only, and rejects amd64 at create time with an error that never
+mentions architecture — on an x86 host this needs buildx and QEMU, so the build
+is slow). A second execution role with a wider action set than the Lambda's: it
+needs ECR pull, X-Ray, and the `bedrock-agentcore:GetWorkloadAccessToken*`
+family on top of everything the agent itself uses. And one more thing to tear
+down.
+
+**Where.** `agent/server.py`, `infra/Dockerfile.agentcore`,
+`infra/iam-policies/agentcore-*.json`, and the `agentcore_image` /
+`agentcore_deploy` / `agentcore_invoke` steps in `infra/setup.sh`.
+
+**Status.** The container is built and health-checked in CI on every commit;
+the server, the role and the teardown are tested. The `create-agent-runtime`
+call itself has not been run against a live account — that one step is
+unverified, and the deploy step fails with an explanation rather than a stack
+trace if the installed AWS CLI predates the API.
+
+---
+
+### D-44 — The health check must not touch a dependency
+
+**Decision.** `GET /ping` returns `{"status": "Healthy"}` without calling
+Bedrock, DynamoDB, CloudWatch or the network.
+
+**Why.** AgentCore replaces a container that fails its health check. A `/ping`
+that verified Bedrock connectivity would therefore answer a Bedrock throttle by
+killing a working agent, and then killing its replacement, and so on for as long
+as the throttle lasted. A liveness check answers "is this process able to serve
+requests", and a dependency check answers a different question that belongs in a
+metric and an alarm — which this project already has (D-38).
+
+**Rejected.** A deep health check that pings DynamoDB — turns every dependency
+blip into a restart storm. No health check at all — then a wedged container
+serves errors indefinitely, because nothing is asking.
+
+**Cost.** A container can report healthy while every tool call fails. That gap
+is covered by the `FailedToolCalls` alarm rather than by the health check, which
+is the right place for it but does mean the two signals must be read together.
+
+**Where.** `agent/server.py`, asserted in
+`tests/test_server.py::TestPing::test_does_not_touch_any_dependency`.
+
+---
+
+### D-45 — An oversized request body is drained before it is rejected
+
+**Decision.** A request whose `content-length` exceeds the 64KB ceiling is read
+and discarded in 64KB chunks up to 1MB, then answered with 413. Above 1MB the
+connection is closed without reading.
+
+**Why.** Answering immediately and closing looks correct and is not: the client
+is still writing, the socket dies under it, and the client reports a connection
+reset rather than the 413 that was actually sent. A status code nobody receives
+is not a rejection, it is an outage — and it would be reported as one. Draining
+first lets the sender finish and read the real answer.
+
+The 1MB ceiling is where that stops being courtesy. Past it the request is
+abusive rather than merely oversized, and draining it is doing the sender's work
+for them, so the connection is dropped instead. Neither branch ever holds the
+whole body in memory.
+
+**Rejected.** Reading the body and checking its size afterwards — an unbounded
+read on a caller-supplied length is how one request exhausts a container. Always
+closing — the common case (a legitimately too-large payload) then gets a network
+error instead of a diagnosable status code.
+
+**Cost.** A 64KB-to-1MB rejected body costs one read of bandwidth that is thrown
+away. Both branches are covered by tests, the second over a raw socket, because
+`urllib` will not construct the malformed requests that reach them.
+
+**Where.** `agent/server.py`, `tests/test_server.py::TestInvocations`.
+
+---
+
+### D-46 — Lint configuration is pinned in the repository, not inherited
+
+**Decision.** `pyproject.toml` names the exact ruff rule families this project
+enforces, and every deliberate exemption carries its reason inline. CI runs the
+same configuration.
+
+**Why.** `ruff` was already a declared dev dependency with no configuration,
+which means it lints against whatever ruleset the installed version defaults
+to — and that changes between releases. The same commit then passes today and
+fails after an unrelated `pip install -U`, which trains everyone to ignore the
+linter. An explicit selection makes the gate reproducible; it also forces the
+exemptions to be argued rather than silently inherited, which is why `BLE001`
+(blind `except Exception`) is disabled with a paragraph explaining that it marks
+exactly three architectural boundaries, each with a test for its degraded path.
+
+**Rejected.** Enforcing `ruff format` as well — it would reflow 21 files of
+hand-wrapped prose comments to no benefit, and the machine's wrapping is worse
+here than the author's. Dropping ruff — a linter that ships in requirements and
+fails is worse than no linter, but the fix is to make it pass.
+
+**Cost.** The rule list needs revisiting when ruff adds something worth having;
+inheriting the default would have picked those up for free, along with the
+churn.
+
+**Where.** `pyproject.toml`, and the `lint` job in `.github/workflows/ci.yml`.
+
+---
+
 ## Decisions deliberately deferred
 
 Things considered and consciously not done, so that "not built" is
@@ -918,8 +1065,6 @@ distinguishable from "not thought about".
 
 | Not built | Why not | What it would cost to add |
 |---|---|---|
-| ECS Fargate eval runner | Optional in the plan; the sweep runs locally today (D-03) | Task definition, image, VPC. IAM already written. |
-| AgentCore Runtime deploy | Same | A day, and it would replace the Lambda rather than add to it |
 | A frontend | Nobody grades a UI and it eats a day | — |
 | Multi-turn conversation | One alert, one investigation. Out of scope by design | Session state in DynamoDB, and every metric here would need redefining per turn |
 | RAG / Bedrock Knowledge Base | The runbook corpus is ten entries (D-08) | A vector store, an embedding pipeline, ongoing cost, non-deterministic retrieval |

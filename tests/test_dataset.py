@@ -11,12 +11,11 @@ from __future__ import annotations
 import collections
 import json
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import pytest
 
 from eval import world
-from eval.run import DEFAULT_DATASET, filter_cases, load_cases
+from eval.run import filter_cases, load_cases
 
 BUCKETS = {"clear_incident", "needs_investigation", "multi_step_correlation", "noise"}
 INVESTIGATION_TOOLS = {"get_service_metrics", "get_recent_deploys", "search_runbook"}

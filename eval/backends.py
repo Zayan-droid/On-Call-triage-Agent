@@ -22,8 +22,9 @@ which one it is, and `docs/DESIGN_DECISIONS.md` D-19 spells out the difference.
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Any, Iterator
+from typing import Any
 
 from agent.config import Config
 from eval import world

@@ -1,5 +1,7 @@
 # On-Call Triage Agent + Evaluation Harness
 
+[![CI](https://github.com/Zayan-droid/On-Call-triage-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Zayan-droid/On-Call-triage-Agent/actions/workflows/ci.yml)
+
 A tool-using agent on Amazon Bedrock that investigates infrastructure alerts —
 querying CloudWatch metrics, deploy history and runbooks — and decides whether to
 open an incident, page the on-call engineer, or stay quiet. Alongside it, a
@@ -15,12 +17,25 @@ a number is not.
 
 ## Architecture
 
-![Architecture: an alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. An evaluation harness replays 38 alerts through the same loop, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch.](docs/architecture.svg)
+![Architecture: an alert POSTs to API Gateway, which invokes a Lambda running a Bedrock Converse tool-use loop. The loop calls CloudWatch for metrics, DynamoDB for deploys, runbooks and incidents, and SNS to page. The same agent package also runs as a container on Bedrock AgentCore Runtime, reached by SigV4 with no public URL. An evaluation harness replays 38 alerts through the same loop, writes results to DynamoDB, and publishes scores as CloudWatch metrics that alarms watch; a full sweep runs as an ECS Fargate task because it outlives Lambda's fifteen-minute ceiling.](docs/architecture.svg)
 
 Every arrow has a reason — if an interviewer asks "why ECS for the eval runner?",
 the answer is that a sweep over 38 alerts takes longer than Lambda's 15-minute
-ceiling. `docs/decisions.md` covers the five most arguable decisions;
-`docs/DESIGN_DECISIONS.md` covers all 42.
+ceiling. `docs/decisions.md` covers the six most arguable decisions;
+`docs/DESIGN_DECISIONS.md` covers all 46.
+
+**The agent is deployed two ways, and they fail differently.** A Lambda behind
+API Gateway is the right shape for an alerting webhook: public HTTPS, scales to
+zero, guarded by a shared secret this project openly calls insufficient. The
+same agent also runs as a container on Bedrock AgentCore Runtime, which has no
+public URL at all — callers use SigV4 and need
+`bedrock-agentcore:InvokeAgentRuntime`. That removes the weakest part of the
+other deployment and replaces "curl this URL" with "assume a role first".
+Neither dominates, so both stay. The second target costs one module:
+`agent/server.py` translates HTTP into the event shape the Lambda handler
+already accepts, so auth, validation, the Converse loop and the five tools are
+the *same* code on both paths and cannot drift
+([ADR-5](docs/decisions.md#adr-5--agentcore-runtime-as-a-second-deployment-target-not-a-replacement)).
 
 ### The agent's five tools
 
@@ -154,8 +169,8 @@ Three that shaped everything else:
   subjective question, and only groundedness pays for a judge.
   → [ADR-3](docs/decisions.md#adr-3--two-deterministic-metrics-two-judged)
 
-Full set: [`docs/decisions.md`](docs/decisions.md) (5 ADRs) ·
-[`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) (all 42, with rejected
+Full set: [`docs/decisions.md`](docs/decisions.md) (6 ADRs) ·
+[`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) (all 46, with rejected
 alternatives and costs).
 
 ---
@@ -187,25 +202,40 @@ Specific, because vague limitations are not limitations.
   Gateway JWT authorizer, or be invoked over EventBridge with no public surface.
 - **Offline mode scripts the model,** so offline numbers measure the harness and
   the tools, not a model's judgement. Every offline report says so in its header.
-- **ECS Fargate runner and AgentCore deploy are designed but not built.** IAM is
-  written; the task definition is not. The sweep runs locally today.
+- **One deploy step has never been run against a live account:**
+  `create-agent-runtime`. The AgentCore image is built and health-checked in CI
+  on every commit, and the role, the server contract and the teardown are
+  tested — but the API call that registers the runtime is unverified, and the
+  step says so rather than pretending otherwise. Everything else here has run.
+- **The Fargate sweep assigns a public IP** instead of routing through a NAT
+  gateway, because a NAT gateway bills ~$32/month whether or not a sweep runs.
+  The task has no inbound rules, but VPC endpoints would be the production
+  answer.
 
 ---
 
 ## Run it yourself
 
-Everything except the last section runs **offline** — no AWS account, no
-credentials, no cost.
+Everything except the deployment sections runs **offline** — no AWS account, no
+credentials, no cost. If you want the guided version,
+[`docs/DEMO.md`](docs/DEMO.md) is a ten-minute walkthrough with the expected
+output quoted for every command.
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate    # or: source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-### The test suite — 378 tests, 92% coverage, ~60 seconds
+### The test suite — 439 tests, 93% coverage, ~90 seconds
 
 ```bash
 pytest
+```
+
+Lint and shell-lint the way CI does:
+
+```bash
+ruff check . && shellcheck --severity=warning infra/setup.sh infra/teardown.sh
 ```
 
 ### A full evaluation sweep, offline
@@ -242,13 +272,17 @@ Each step is idempotent and can be run alone. `preflight` checks credentials,
 tooling, and Bedrock model access before anything is created.
 
 ```bash
-export AWS_REGION=us-east-1 PAGER_EMAIL=you@example.com
+cp infra/.env.example infra/.env    # then edit AWS_REGION and PAGER_EMAIL
 bash infra/setup.sh preflight
 ```
 
 ```bash
 bash infra/setup.sh all
 ```
+
+`bash infra/setup.sh` with no arguments lists every step and what it creates.
+It never acts on an empty argument list — a setup script that did would be one
+stray Enter away from a surprise bill.
 
 Then the real experiment — this is where the numbers for the results table above
 come from:
@@ -265,11 +299,49 @@ python -m eval.run --mode aws --prompt-variant v2_investigate_first --tag aws-tr
 python -m eval.report --compare aws-baseline aws-treatment --markdown
 ```
 
+### The eval runner on ECS Fargate
+
+Why it exists: a 38-case sweep against real Bedrock takes 15–25 minutes and
+Lambda stops at 15. Needs Docker.
+
+```bash
+bash infra/setup.sh ecs_all
+```
+
+```bash
+bash infra/setup.sh evalrun
+```
+
+That builds and pushes the image, creates the task execution role, the task
+role, the cluster and the log group, registers the task definition, then runs
+one sweep as a Fargate task and tails it to completion. Per-case results land in
+DynamoDB under `PK=RUN#<run-id>`; the aggregate scores become CloudWatch metrics
+that the two quality alarms read.
+
+### The same agent on AgentCore Runtime
+
+Needs Docker with arm64 support (`docker buildx`) — AgentCore accepts
+`linux/arm64` images only.
+
+```bash
+bash infra/setup.sh agentcore_all
+```
+
+That builds and pushes the arm64 image, creates the runtime execution role,
+registers the agent runtime, and invokes it once with a real alert. There is no
+public URL: the invoke goes through `aws bedrock-agentcore invoke-agent-runtime`
+with SigV4.
+
 **Delete every billable resource when you are done:**
 
 ```bash
 bash infra/teardown.sh all
 ```
+
+One confirmation, then deletes in dependency order — the runtime and the task
+definition go before the image repositories they point at. `teardown.sh metrics`
+explains the one thing that cannot be deleted: CloudWatch custom metrics expire
+15 months after their last datapoint and not before.
 
 ---
 
@@ -277,7 +349,8 @@ bash infra/teardown.sh all
 
 ```
 ├── agent/
-│   ├── handler.py      API Gateway entrypoint: auth, validation, metrics
+│   ├── handler.py      Lambda entrypoint: auth, validation, metrics
+│   ├── server.py       the same handler over HTTP, for AgentCore Runtime
 │   ├── agent.py        Converse loop, bounded retry, forced-decision fallback
 │   ├── tools.py        the five tools, strict validation, full trace
 │   ├── prompts.py      v1_baseline / v2_investigate_first, one axis apart
@@ -295,13 +368,43 @@ bash infra/teardown.sh all
 │   ├── report.py       tables and the experiment comparison
 │   └── results/        run summaries (full traces are git-ignored)
 ├── infra/
-│   ├── iam-policies/   the actual policies, tested for tight scoping
-│   ├── setup.sh        10 idempotent steps
-│   ├── teardown.sh     reverse order, one confirmation
-│   └── seed_data.py    materialise the dataset's world into real AWS
-├── tests/              378 tests against moto, not hand-rolled mocks
+│   ├── iam-policies/           7 policies, tested for tight scoping
+│   ├── setup.sh                17 idempotent steps in 3 deploy targets
+│   ├── teardown.sh             reverse order, one confirmation
+│   ├── seed_data.py            materialise the dataset's world into real AWS
+│   ├── .env.example            every knob, with the reason for each default
+│   ├── ecs-task-definition.json
+│   ├── Dockerfile.eval-runner  the batch sweep (amd64)
+│   └── Dockerfile.agentcore    the agent itself (arm64, required)
+├── tests/                      439 tests against moto, not hand-rolled mocks
+├── .github/workflows/ci.yml    lint, tests, a real sweep, shellcheck, both images
 └── docs/
-    ├── decisions.md          5 ADRs
-    ├── DESIGN_DECISIONS.md   all 42, with rejected alternatives and costs
-    └── TESTING_GUIDE.md      how to break this on purpose
+    ├── decisions.md          6 ADRs
+    ├── DESIGN_DECISIONS.md   all 46, with rejected alternatives and costs
+    ├── TESTING_GUIDE.md      how to break this on purpose
+    └── DEMO.md               a ten-minute walkthrough, offline, with expected output
 ```
+
+---
+
+## Continuous integration
+
+Five jobs, every one of them offline. There are no AWS credentials in this
+repository and none are needed — the tests use moto and the harness has an
+offline mode with a scripted model. That is deliberate: a pipeline that needs a
+live account fails for reasons unrelated to the commit, and one that needs
+long-lived keys in secrets is a credential nobody rotates.
+
+| Job | What it proves |
+|---|---|
+| `ruff` | Lint, against a rule set pinned in `pyproject.toml` rather than whatever the installed version defaults to ([D-46](docs/DESIGN_DECISIONS.md#d-46--lint-configuration-is-pinned-in-the-repository-not-inherited)) |
+| `pytest` | 439 tests with a 90% coverage floor |
+| `eval harness` | A full 38-case sweep, two broken policies caught, **and the prompt experiment re-run from scratch** — if a refactor changes the measured effect of the prompt, that is the most important regression this project can have, and the README quotes the number |
+| `shellcheck` | The deploy scripts parse, lint clean, and print help without touching AWS |
+| `docker` | Both images build, the eval runner's imports resolve, and the AgentCore container passes the same `GET /ping` that AgentCore itself polls |
+
+---
+
+## Licence
+
+[MIT](LICENSE).

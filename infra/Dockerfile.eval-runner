@@ -1,0 +1,50 @@
+# The batch evaluation runner, for ECS Fargate.
+#
+# Why this exists at all: a full 38-case sweep against real Bedrock takes
+# roughly 15-25 minutes, and each case is a multi-turn Converse loop that
+# cannot be parallelised away without changing what is being measured. Lambda
+# stops at 15 minutes. That ceiling is a real constraint, and Fargate -- which
+# has no execution time limit and bills per second while a task runs -- is the
+# smallest thing that removes it. See docs/decisions.md ADR-2.
+#
+# Built and pushed by `bash infra/setup.sh image`.
+
+# public.ecr.aws rather than Docker Hub: Hub applies anonymous pull rate limits
+# that fail a build in CI at the worst possible time, and the ECR mirror is in
+# the same network as the thing pulling from it.
+FROM public.ecr.aws/docker/library/python:3.12-slim
+
+# Fail fast and loudly, and never buffer: stdout is the only way a Fargate task
+# can say anything, and a buffered crash loses the last thing it said.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# Dependencies first, as their own layer. They change far less often than the
+# code, so an image rebuild after editing a scorer reuses this layer instead of
+# re-resolving boto3.
+COPY requirements.txt ./
+RUN python -m pip install -r requirements.txt
+
+# Only what the sweep actually imports. No tests, no docs, no infra scripts.
+COPY agent/ ./agent/
+COPY eval/ ./eval/
+
+# A non-root user. Nothing here needs root, and the task role -- not the
+# container user -- is what grants AWS access, so dropping privileges costs
+# nothing. `results` is created and chowned first because the sweep writes its
+# audit JSON there, and a read-only home directory would fail at the last step
+# of a twenty-minute run.
+RUN mkdir -p /app/eval/results \
+ && useradd --system --uid 10001 --user-group --shell /usr/sbin/nologin runner \
+ && chown -R runner:runner /app/eval/results
+USER runner
+
+# `--mode aws` is not baked in: the entrypoint is the harness, and the task
+# definition supplies the arguments. That means a one-off sweep with different
+# flags is `aws ecs run-task --overrides`, not a rebuild.
+ENTRYPOINT ["python", "-m", "eval.run"]
+CMD ["--mode", "aws", "--judge", "both", "--write-dynamo", "--emit-metrics", "--quiet"]

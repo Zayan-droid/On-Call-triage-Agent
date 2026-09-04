@@ -24,7 +24,8 @@ from __future__ import annotations
 
 import itertools
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 POLICY_GOOD = "good"
 POLICY_TRIGGER_HAPPY = "trigger_happy"
@@ -363,7 +364,7 @@ class ScriptedBedrock:
             self.hook(kwargs)
         if self.throttle_times > 0:
             self.throttle_times -= 1
-            raise ThrottlingException()
+            raise ThrottlingException
         if self.fail_with is not None:
             raise self.fail_with
 
@@ -553,9 +554,9 @@ class ScriptedBedrock:
         if policy == POLICY_HALLUCINATOR:
             # Numbers no tool returned, and a runbook id that does not exist.
             reasoning = (
-                f"CPU has been pinned at 99.7% for 41 minutes and the error rate "
-                f"reached 17.3%, which the runbook says is a hard page. The deploy "
-                f"1400 minutes ago is the likely cause."
+                "CPU has been pinned at 99.7% for 41 minutes and the error rate "
+                "reached 17.3%, which the runbook says is a hard page. The deploy "
+                "1400 minutes ago is the likely cause."
             )
             runbook = "RB-999"
 

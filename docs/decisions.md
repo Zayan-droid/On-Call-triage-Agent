@@ -1,9 +1,9 @@
 # Architecture decision records
 
-Five decisions, one paragraph each. These are the ones an interviewer is most
+Six decisions, one paragraph each. These are the ones an interviewer is most
 likely to ask about, and the ones where the alternative was genuinely arguable.
 
-The exhaustive version — 42 decisions with rejected alternatives and costs — is
+The exhaustive version — 46 decisions with rejected alternatives and costs — is
 [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md). How to attack any of them is
 [`TESTING_GUIDE.md`](TESTING_GUIDE.md).
 
@@ -54,9 +54,21 @@ image, a VPC, and two IAM roles instead of one — task role versus task executi
 role, which are genuinely different things: one is what the container may do,
 the other is what ECS may do on its behalf to start it.
 
-Status: designed and IAM'd, not deployed. The sweep runs locally today with
-`python -m eval.run --mode aws`. Full detail:
-[D-03](DESIGN_DECISIONS.md#d-03--ecs-fargate-for-the-batch-eval-runner).
+Built: `infra/Dockerfile.eval-runner`, `infra/ecs-task-definition.json`, and
+the `ecr` / `image` / `ecs` / `evalrun` steps in `infra/setup.sh`. The same
+sweep still runs locally with `python -m eval.run --mode aws`, which is what
+makes the Fargate task worth having rather than necessary — the container is
+how it runs unattended and to completion, not how it runs at all.
+
+One thing the task definition forced into the open: the container's filesystem
+goes away when the task stops, so a sweep that only wrote its JSON to disk
+would burn twenty minutes and leave nothing. `--write-dynamo --emit-metrics`
+are baked into the task's command for that reason, and a test asserts they are
+still there. The task role also has no `sns:Publish`, so a batch sweep
+*cannot* page anyone even if someone passes `--send-pages` — the permission
+boundary agrees with the flag default instead of trusting it.
+
+Full detail: [D-03](DESIGN_DECISIONS.md#d-03--ecs-fargate-for-the-batch-eval-runner).
 
 ---
 
@@ -113,7 +125,49 @@ Full detail: [D-07](DESIGN_DECISIONS.md#d-07--dedupe-with-a-conditional-write-no
 
 ---
 
-## ADR-5 — What I would change with more time
+## ADR-5 — AgentCore Runtime as a second deployment target, not a replacement
+
+The same agent is deployed two ways: a Lambda behind API Gateway, and a
+container on Bedrock AgentCore Runtime. Keeping both is the decision worth
+defending, because the obvious move is to pick one.
+
+They fail differently, and that is the point. The Lambda has a public HTTPS
+endpoint, scales to zero, costs nothing idle, and is authenticated by a shared
+secret this project openly calls insufficient. AgentCore has no public URL —
+callers authenticate with SigV4 and need `bedrock-agentcore:InvokeAgentRuntime`
+— which removes the weakest part of the other deployment, but replaces "curl
+this URL" with "assume a role first". For an alerting webhook, the Lambda is
+the right shape. For an agent invoked by other AWS principals, AgentCore is.
+Neither dominates.
+
+What made this cheap enough to be worth doing is that the container adds one
+module. `agent/server.py` translates HTTP into the event shape
+`lambda_handler` already accepts and translates the response back; auth,
+validation, the Converse loop, the five tools and the metrics are the same
+modules the Lambda runs. There is no second implementation to keep in step,
+which is the usual reason two deployment paths become one deployment path and
+one liability. Its tests assert transport behaviour only, and go over a real
+socket — the risks in that module are content-length handling, status codes and
+header case, none of which a test that calls `do_POST` directly would touch.
+
+Two things that cost real time and are worth stating because neither is
+discoverable from an error message. AgentCore accepts `linux/arm64` images
+only, and rejects an amd64 image at create time without mentioning
+architecture. And the health check must not call a dependency: AgentCore
+replaces a container that fails `GET /ping`, so a `/ping` that verified Bedrock
+connectivity would answer a Bedrock throttle by killing a working agent.
+
+**Honest status:** the code, the IAM and the deploy steps are written and the
+container is built and health-checked in CI on every commit. The
+`create-agent-runtime` call itself has not been run against a live account, so
+treat that one step as unverified until it has been. Everything around it —
+the image, the server contract, the role, the teardown — is tested.
+
+Full detail: [D-43](DESIGN_DECISIONS.md#d-43--agentcore-runtime-as-a-second-deployment-target).
+
+---
+
+## ADR-6 — What I would change with more time
 
 **Validate the LLM judge against human labels.** The agreement rate between the
 two judges is a consistency check, not a correctness one — they could agree and
@@ -133,7 +187,7 @@ experiment and wrong as a model of production, which would run non-zero. Running
 each arm five times at production temperature and reporting the spread would say
 something the current numbers cannot.
 
-**Then the deferred infrastructure** — the Fargate runner (ADR-2), an AgentCore
-Runtime deploy for comparison, and a JWT authorizer in place of the shared-secret
-API key. All three are known quantities; none of them would change what the
-project demonstrates, which is why they came last.
+**Replace the shared-secret API key with a JWT authorizer.** The last piece of
+deferred infrastructure, and the only one left: a known quantity that would not
+change what the project demonstrates, which is why it came last. The AgentCore
+deployment (ADR-5) already sidesteps it by having no public surface at all.

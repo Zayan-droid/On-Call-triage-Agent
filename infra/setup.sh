@@ -52,6 +52,29 @@ FOUNDATION_MODEL_ID="${FOUNDATION_MODEL_ID:-anthropic.claude-sonnet-4-5-20250929
 PAGER_EMAIL="${PAGER_EMAIL:-}"
 BUILD_DIR="$ROOT/build"
 
+# ---- container deployment targets (ECS Fargate + AgentCore Runtime) ----
+# Both are separate deploy targets rather than part of `all`: each needs Docker,
+# each pushes an image, and neither is required to run or demonstrate the
+# serverless system. Grouped runs are `ecs_all` and `agentcore_all`.
+ECR_REPO_NAME="${ECR_REPO_NAME:-triage-eval-runner}"
+ECS_TASK_FAMILY="${ECS_TASK_FAMILY:-triage-eval-runner}"
+ECS_CLUSTER_NAME="${ECS_CLUSTER_NAME:-triage-eval}"
+ECS_EXECUTION_ROLE_NAME="${ECS_EXECUTION_ROLE_NAME:-triage-eval-runner-execution-role}"
+ECS_TASK_ROLE_NAME="${ECS_TASK_ROLE_NAME:-triage-eval-runner-task-role}"
+AGENTCORE_REPO_NAME="${AGENTCORE_REPO_NAME:-triage-agentcore}"
+AGENTCORE_RUNTIME_NAME="${AGENTCORE_RUNTIME_NAME:-triage_agent}"
+AGENTCORE_ROLE_NAME="${AGENTCORE_ROLE_NAME:-triage-agentcore-role}"
+PROMPT_VARIANT="${PROMPT_VARIANT:-v2_investigate_first}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
+
+# Kept as a variable rather than inline JSON inside a function, where its
+# braces read as shell expansion to anyone skimming the file.
+ECR_LIFECYCLE_POLICY='{"rules":[{"rulePriority":1,
+  "description":"Expire untagged images after 1 day",
+  "selection":{"tagStatus":"untagged","countType":"sinceImagePushed",
+               "countUnit":"days","countNumber":1},
+  "action":{"type":"expire"}}]}'
+
 blue()  { printf '\033[0;34m%s\033[0m\n' "$*"; }
 green() { printf '\033[0;32m%s\033[0m\n' "$*"; }
 warn()  { printf '\033[0;33m%s\033[0m\n' "$*" >&2; }
@@ -105,9 +128,33 @@ render_policy() {
       -e "s|\${MODEL_ID}|$MODEL_ID|g" \
       -e "s|\${FOUNDATION_MODEL_ID}|$FOUNDATION_MODEL_ID|g" \
       -e "s|\${SERVICE_METRICS_NAMESPACE}|$SERVICE_METRICS_NAMESPACE|g" \
-      -e "s|\${ECS_TASK_FAMILY}|${ECS_TASK_FAMILY:-triage-eval-runner}|g" \
-      -e "s|\${ECR_REPO_NAME}|${ECR_REPO_NAME:-triage-eval-runner}|g" \
+      -e "s|\${AGENT_METRICS_NAMESPACE}|$AGENT_METRICS_NAMESPACE|g" \
+      -e "s|\${ECS_TASK_FAMILY}|$ECS_TASK_FAMILY|g" \
+      -e "s|\${ECR_REPO_NAME}|$ECR_REPO_NAME|g" \
+      -e "s|\${ECS_EXECUTION_ROLE_NAME}|$ECS_EXECUTION_ROLE_NAME|g" \
+      -e "s|\${ECS_TASK_ROLE_NAME}|$ECS_TASK_ROLE_NAME|g" \
+      -e "s|\${AGENTCORE_REPO_NAME}|$AGENTCORE_REPO_NAME|g" \
+      -e "s|\${AGENTCORE_RUNTIME_NAME}|$AGENTCORE_RUNTIME_NAME|g" \
+      -e "s|\${PROMPT_VARIANT}|$PROMPT_VARIANT|g" \
+      -e "s|\${IMAGE_TAG}|$IMAGE_TAG|g" \
       "$file"
+}
+
+ensure_role() {
+  # Create the role, or update the trust policy of the one that is already
+  # there. Every role in this script goes through here so that re-running a
+  # step never fails with EntityAlreadyExists.
+  local name="$1" trust="$2" description="$3"
+  if aws iam get-role --role-name "$name" >/dev/null 2>&1; then
+    echo "  role $name exists; updating its trust policy"
+    aws iam update-assume-role-policy --role-name "$name" \
+      --policy-document "$trust" >/dev/null
+  else
+    echo "  creating role $name"
+    aws iam create-role --role-name "$name" \
+      --assume-role-policy-document "$trust" \
+      --description "$description" >/dev/null
+  fi
 }
 
 step_iam() {
@@ -117,16 +164,7 @@ step_iam() {
   trust="$(render_policy "$account" "$POLICY_DIR/lambda-trust-policy.json")"
   perms="$(render_policy "$account" "$POLICY_DIR/triage-agent-permissions.json")"
 
-  if aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
-    echo "  role $ROLE_NAME exists; updating its trust policy"
-    aws iam update-assume-role-policy --role-name "$ROLE_NAME" \
-      --policy-document "$trust" >/dev/null
-  else
-    echo "  creating role $ROLE_NAME"
-    aws iam create-role --role-name "$ROLE_NAME" \
-      --assume-role-policy-document "$trust" \
-      --description "Execution role for the on-call triage agent Lambda" >/dev/null
-  fi
+  ensure_role "$ROLE_NAME" "$trust" "Execution role for the triage agent Lambda"
 
   # An inline policy rather than a managed one: this policy is meaningless
   # outside this role, and inline means it cannot be left attached to something
@@ -312,6 +350,8 @@ step_api() {
 # 7. seed
 # --------------------------------------------------------------------------
 
+# shellcheck disable=SC2120  # called with no arguments by `all`, and with
+# extra flags when invoked directly: `bash infra/setup.sh seed --dry-run`.
 step_seed() {
   blue "== seed =="
   python3 "$ROOT/infra/seed_data.py" \
@@ -411,6 +451,344 @@ step_smoke() {
 }
 
 # --------------------------------------------------------------------------
+# 11-14. ECS Fargate batch eval runner
+#
+# Why any of this exists: a 38-case sweep against real Bedrock takes 15-25
+# minutes and Lambda stops at 15. That ceiling is the whole reason there is a
+# container here at all -- see docs/decisions.md ADR-2.
+# --------------------------------------------------------------------------
+
+require_docker() {
+  command -v docker >/dev/null 2>&1 || die "docker is not on PATH; the image steps need it"
+  docker info >/dev/null 2>&1 || die "docker is installed but not running"
+}
+
+ecr_registry() { echo "$1.dkr.ecr.$AWS_REGION.amazonaws.com"; }
+
+
+ensure_ecr_repo() {
+  local name="$1"
+  if aws ecr describe-repositories --repository-names "$name" >/dev/null 2>&1; then
+    echo "  repo $name exists"
+  else
+    echo "  creating repo $name"
+    # Scan on push: a base image picks up CVEs between builds and this is the
+    # cheapest place to find that out. Tags stay MUTABLE on purpose -- `latest`
+    # is re-pushed on every build here, and immutability would break that.
+    aws ecr create-repository --repository-name "$name" \
+      --image-scanning-configuration scanOnPush=true \
+      --image-tag-mutability MUTABLE >/dev/null
+  fi
+
+  # Untagged layers left behind by a re-pushed tag are billed storage that
+  # nothing can ever pull again. Expire them.
+  aws ecr put-lifecycle-policy --repository-name "$name" \
+    --lifecycle-policy-text "$ECR_LIFECYCLE_POLICY" >/dev/null
+}
+
+step_ecr() {
+  blue "== ecr =="
+  ensure_ecr_repo "$ECR_REPO_NAME"
+  ensure_ecr_repo "$AGENTCORE_REPO_NAME"
+  green "  2 repositories ready in $(ecr_registry "$(account_id)")"
+}
+
+docker_login() {
+  local registry="$1"
+  aws ecr get-login-password --region "$AWS_REGION" \
+    | docker login --username AWS --password-stdin "$registry" >/dev/null \
+    || die "docker login to $registry failed"
+}
+
+step_image() {
+  blue "== image (eval runner) =="
+  require_docker
+  local account registry uri
+  account="$(account_id)"
+  registry="$(ecr_registry "$account")"
+  uri="$registry/$ECR_REPO_NAME:$IMAGE_TAG"
+
+  ensure_ecr_repo "$ECR_REPO_NAME"
+  docker_login "$registry"
+
+  echo "  building $uri"
+  docker build --platform linux/amd64 \
+    -f "$ROOT/infra/Dockerfile.eval-runner" -t "$uri" "$ROOT" \
+    || die "docker build failed"
+  echo "  pushing"
+  docker push "$uri" >/dev/null || die "docker push failed"
+  green "  pushed $uri"
+}
+
+step_ecs() {
+  blue "== ecs =="
+  local account trust exec_perms task_perms task_def revision
+  account="$(account_id)"
+
+  # Two roles, and the difference between them is the thing actually worth
+  # understanding about ECS:
+  #
+  #   execution role  what ECS ITSELF may do on the task's behalf before the
+  #                   container starts -- pull the image, write to the log group.
+  #   task role       what the CODE INSIDE the container may do once it is
+  #                   running -- Bedrock, DynamoDB, CloudWatch.
+  #
+  # Collapsing them into one role is the standard mistake. It hands the
+  # container permission to pull arbitrary images from the registry, which is
+  # not a thing the eval sweep has any business doing.
+  trust="$(render_policy "$account" "$POLICY_DIR/ecs-tasks-trust-policy.json")"
+  exec_perms="$(render_policy "$account" "$POLICY_DIR/eval-runner-execution-role.json")"
+  task_perms="$(render_policy "$account" "$POLICY_DIR/eval-runner-task-role.json")"
+
+  ensure_role "$ECS_EXECUTION_ROLE_NAME" "$trust" \
+    "ECS pulls the image and creates the log group with this"
+  aws iam put-role-policy --role-name "$ECS_EXECUTION_ROLE_NAME" \
+    --policy-name "eval-runner-execution" --policy-document "$exec_perms" >/dev/null
+
+  ensure_role "$ECS_TASK_ROLE_NAME" "$trust" \
+    "The eval sweep running inside the container uses this"
+  aws iam put-role-policy --role-name "$ECS_TASK_ROLE_NAME" \
+    --policy-name "eval-runner-task" --policy-document "$task_perms" >/dev/null
+  echo "  roles: $ECS_EXECUTION_ROLE_NAME (execution), $ECS_TASK_ROLE_NAME (task)"
+
+  # A Fargate cluster is free and holds no capacity of its own -- it is a
+  # namespace for tasks, not a set of machines.
+  aws ecs create-cluster --cluster-name "$ECS_CLUSTER_NAME" >/dev/null
+  echo "  cluster: $ECS_CLUSTER_NAME"
+
+  # Created here, with retention, rather than letting the awslogs driver create
+  # it: a log group created by the driver never expires.
+  aws logs create-log-group --log-group-name "/ecs/$ECS_TASK_FAMILY" 2>/dev/null || true
+  aws logs put-retention-policy --log-group-name "/ecs/$ECS_TASK_FAMILY" \
+    --retention-in-days "$LOG_RETENTION_DAYS" >/dev/null
+  echo "  log group: /ecs/$ECS_TASK_FAMILY (${LOG_RETENTION_DAYS}d retention)"
+
+  task_def="$(render_policy "$account" "$ROOT/infra/ecs-task-definition.json")"
+  echo "$task_def" | jq empty || die "the rendered task definition is not valid JSON"
+  revision="$(aws ecs register-task-definition --cli-input-json "$task_def" \
+    --query 'taskDefinition.revision' --output text)" || die "register-task-definition failed"
+  green "  registered $ECS_TASK_FAMILY:$revision"
+}
+
+network_config() {
+  # Fargate requires awsvpc networking, which requires subnets and a security
+  # group. The default VPC is used unless overridden, and the task gets a
+  # public IP rather than routing through a NAT gateway. That is a cost
+  # decision with a real number behind it: the task's only egress is to
+  # Bedrock, DynamoDB, CloudWatch and ECR, and a NAT gateway bills about $32 a
+  # month whether or not a sweep ever runs. A public IP on a task with no
+  # inbound rules costs nothing. VPC endpoints would be the production answer.
+  local subnets sg vpc
+  subnets="${ECS_SUBNET_IDS:-}"
+  sg="${ECS_SECURITY_GROUP_ID:-}"
+
+  if [ -z "$subnets" ]; then
+    subnets="$(aws ec2 describe-subnets --filters "Name=default-for-az,Values=true" \
+      --query 'Subnets[].SubnetId' --output text | tr '\t' ',')"
+    [ -n "$subnets" ] || die "no default subnets found; set ECS_SUBNET_IDS=subnet-a,subnet-b"
+  fi
+  if [ -z "$sg" ]; then
+    vpc="$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" \
+      --query 'Vpcs[0].VpcId' --output text)"
+    [ "$vpc" != "None" ] || die "no default VPC found; set ECS_SECURITY_GROUP_ID"
+    sg="$(aws ec2 describe-security-groups \
+      --filters "Name=vpc-id,Values=$vpc" "Name=group-name,Values=default" \
+      --query 'SecurityGroups[0].GroupId' --output text)"
+  fi
+  echo "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$sg],assignPublicIp=ENABLED}"
+}
+
+step_evalrun() {
+  blue "== evalrun =="
+  local net task_arn task_id exit_code
+  net="$(network_config)"
+  echo "  $net"
+
+  task_arn="$(aws ecs run-task --cluster "$ECS_CLUSTER_NAME" \
+    --task-definition "$ECS_TASK_FAMILY" --launch-type FARGATE \
+    --network-configuration "$net" \
+    --query 'tasks[0].taskArn' --output text)" || die "run-task failed"
+  [ "$task_arn" != "None" ] || die "run-task started nothing; check 'failures' in its response"
+
+  task_id="${task_arn##*/}"
+  green "  task $task_id started"
+  echo "  waiting for it to stop (a full sweep is 15-25 minutes)..."
+  # The ECS waiter gives up after 100 polls at 6s, which is 10 minutes, so it
+  # is called in a loop. A sweep outliving one waiter is the normal case here,
+  # and that is the same 15-minute-class duration that ruled out Lambda.
+  until aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$task_arn" 2>/dev/null
+  do
+    echo "  still running..."
+  done
+
+  exit_code="$(aws ecs describe-tasks --cluster "$ECS_CLUSTER_NAME" --tasks "$task_arn" \
+    --query 'tasks[0].containers[0].exitCode' --output text)"
+  echo
+  blue "  logs (/ecs/$ECS_TASK_FAMILY, stream eval/eval-runner/$task_id):"
+  aws logs tail "/ecs/$ECS_TASK_FAMILY" --since 1h --format short 2>/dev/null | tail -40 \
+    || warn "  no logs yet"
+  echo
+  if [ "$exit_code" = "0" ]; then
+    green "  task exited 0"
+    echo "  Per-case results are in DynamoDB under PK=RUN#<run-id>; the aggregate"
+    echo "  scores are CloudWatch metrics in $EVAL_METRICS_NAMESPACE, which is what"
+    echo "  the two quality alarms read."
+  else
+    die "task exited $exit_code -- see the logs above"
+  fi
+}
+
+# --------------------------------------------------------------------------
+# 15-17. Bedrock AgentCore Runtime
+#
+# A second deployment target for the same agent, not a replacement for the
+# Lambda. AgentCore runs a container and speaks HTTP to it rather than invoking
+# a function, so the only new code is the transport in agent/server.py -- auth,
+# validation, the Converse loop and the five tools are the same modules.
+# See docs/decisions.md ADR-5.
+# --------------------------------------------------------------------------
+
+require_agentcore_cli() {
+  # These APIs are recent enough that an older AWS CLI v2 does not have the
+  # commands at all. Failing here, with the reason, beats a bare
+  # "Invalid choice: 'bedrock-agentcore-control'" twenty lines into a deploy.
+  aws bedrock-agentcore-control help >/dev/null 2>&1 || die \
+    "this AWS CLI has no 'bedrock-agentcore-control' commands -- upgrade it and re-run.
+  Nothing else in this script needs them: the Lambda deployment and the ECS
+  eval runner are unaffected."
+}
+
+step_agentcore_image() {
+  blue "== agentcore image =="
+  require_docker
+  local account registry uri
+  account="$(account_id)"
+  registry="$(ecr_registry "$account")"
+  uri="$registry/$AGENTCORE_REPO_NAME:$IMAGE_TAG"
+
+  ensure_ecr_repo "$AGENTCORE_REPO_NAME"
+  docker_login "$registry"
+
+  # AgentCore accepts linux/arm64 only, and rejects an amd64 image at create
+  # time with an error that does not mention architecture. On an x86 host this
+  # needs buildx with QEMU emulation, which is why the platform is explicit and
+  # why this build is slower than the eval runner's.
+  echo "  building $uri for linux/arm64"
+  if docker buildx version >/dev/null 2>&1; then
+    docker buildx build --platform linux/arm64 --load \
+      -f "$ROOT/infra/Dockerfile.agentcore" -t "$uri" "$ROOT" || die "buildx build failed"
+  else
+    warn "  docker buildx is not available; falling back to a plain build."
+    warn "  On an x86 host that produces an amd64 image, which AgentCore rejects."
+    docker build --platform linux/arm64 \
+      -f "$ROOT/infra/Dockerfile.agentcore" -t "$uri" "$ROOT" || die "docker build failed"
+  fi
+
+  echo "  pushing"
+  docker push "$uri" >/dev/null || die "docker push failed"
+  green "  pushed $uri"
+}
+
+agentcore_runtime_field() {
+  # One place that reads a field off the runtime by name, so every caller
+  # tolerates it not existing yet.
+  aws bedrock-agentcore-control list-agent-runtimes \
+    --query "agentRuntimes[?agentRuntimeName=='$AGENTCORE_RUNTIME_NAME'].$1 | [0]" \
+    --output text 2>/dev/null || echo None
+}
+
+step_agentcore_deploy() {
+  blue "== agentcore deploy =="
+  require_agentcore_cli
+  local account registry uri trust perms role_arn runtime_id env_json
+  account="$(account_id)"
+  registry="$(ecr_registry "$account")"
+  uri="$registry/$AGENTCORE_REPO_NAME:$IMAGE_TAG"
+
+  trust="$(render_policy "$account" "$POLICY_DIR/agentcore-trust-policy.json")"
+  perms="$(render_policy "$account" "$POLICY_DIR/agentcore-runtime-role.json")"
+  ensure_role "$AGENTCORE_ROLE_NAME" "$trust" \
+    "Execution role for the triage agent on AgentCore Runtime"
+  aws iam put-role-policy --role-name "$AGENTCORE_ROLE_NAME" \
+    --policy-name "agentcore-runtime" --policy-document "$perms" >/dev/null
+  role_arn="arn:aws:iam::$account:role/$AGENTCORE_ROLE_NAME"
+  echo "  role: $role_arn"
+
+  # The same environment the Lambda gets, so the two deployments are one agent
+  # configured identically rather than two agents that merely resemble one
+  # another. Built with jq so a value containing a comma cannot corrupt it.
+  env_json="$(jq -n \
+    --arg table "$TABLE_NAME" \
+    --arg topic "arn:aws:sns:$AWS_REGION:$account:$TOPIC_NAME" \
+    --arg model "$MODEL_ID" \
+    --arg variant "$PROMPT_VARIANT" \
+    --arg ns "$AGENT_METRICS_NAMESPACE" \
+    --arg svc_ns "$SERVICE_METRICS_NAMESPACE" \
+    '{TRIAGE_TABLE_NAME:$table, TRIAGE_SNS_TOPIC_ARN:$topic, TRIAGE_MODEL_ID:$model,
+      TRIAGE_PROMPT_VARIANT:$variant, TRIAGE_METRICS_NAMESPACE:$ns,
+      TRIAGE_SERVICE_METRICS_NAMESPACE:$svc_ns, TRIAGE_LOG_LEVEL:"INFO"}')"
+
+  runtime_id="$(agentcore_runtime_field agentRuntimeId)"
+
+  if [ "$runtime_id" = "None" ] || [ -z "$runtime_id" ]; then
+    echo "  creating runtime $AGENTCORE_RUNTIME_NAME"
+    aws bedrock-agentcore-control create-agent-runtime \
+      --agent-runtime-name "$AGENTCORE_RUNTIME_NAME" \
+      --agent-runtime-artifact "containerConfiguration={containerUri=$uri}" \
+      --network-configuration "networkMode=PUBLIC" \
+      --protocol-configuration "serverProtocol=HTTP" \
+      --role-arn "$role_arn" \
+      --environment-variables "$env_json" \
+      --description "On-call triage agent -- same code as the triage-agent Lambda" \
+      >/dev/null || die "create-agent-runtime failed"
+  else
+    echo "  runtime exists ($runtime_id); updating it to $IMAGE_TAG"
+    aws bedrock-agentcore-control update-agent-runtime \
+      --agent-runtime-id "$runtime_id" \
+      --agent-runtime-artifact "containerConfiguration={containerUri=$uri}" \
+      --network-configuration "networkMode=PUBLIC" \
+      --protocol-configuration "serverProtocol=HTTP" \
+      --role-arn "$role_arn" \
+      --environment-variables "$env_json" \
+      >/dev/null || die "update-agent-runtime failed"
+  fi
+
+  green "  runtime arn: $(agentcore_runtime_field agentRuntimeArn)"
+  warn "  Inbound auth is IAM SigV4: a caller needs bedrock-agentcore:InvokeAgentRuntime."
+  warn "  There is no public URL, which is the practical difference from the API"
+  warn "  Gateway deployment -- and the reason that one needs an API key and this"
+  warn "  one does not."
+}
+
+step_agentcore_invoke() {
+  blue "== agentcore invoke =="
+  require_agentcore_cli
+  local arn session out payload
+  arn="$(agentcore_runtime_field agentRuntimeArn)"
+  [ "$arn" != "None" ] || die "no runtime named $AGENTCORE_RUNTIME_NAME; run the deploy step"
+  echo "  runtime: $arn"
+
+  # AgentCore rejects a session id shorter than 33 characters.
+  session="triage-smoke-$(python3 -c 'import uuid; print(uuid.uuid4().hex)')"
+  payload='{"alarm_name":"checkout-api-5xx-high","service":"checkout-api","environment":"prod","metric":"Error5xxRate","value":8.4,"threshold":1.0,"duration_min":14}'
+  out="$(mktemp)"
+
+  aws bedrock-agentcore invoke-agent-runtime \
+    --agent-runtime-arn "$arn" \
+    --runtime-session-id "$session" \
+    --content-type "application/json" \
+    --payload "$payload" \
+    "$out" >/dev/null || die "invoke-agent-runtime failed"
+
+  jq . < "$out" 2>/dev/null || cat "$out"
+  rm -f "$out"
+  echo
+  blue "  recent runtime logs:"
+  aws logs tail "/aws/bedrock-agentcore/runtimes" --since 10m --format short 2>/dev/null \
+    | tail -20 || warn "  no logs yet (the group appears after the first invocation)"
+}
+
+# --------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------
 
@@ -418,7 +796,7 @@ usage() {
   cat <<EOF
 Usage: bash infra/setup.sh <step>
 
-Steps, in order:
+The serverless system -- steps in order, and what \`all\` runs:
   preflight   credentials, tooling, and Bedrock model access
   iam         execution role + tightly scoped inline policy
   sns         paging topic (set PAGER_EMAIL to subscribe)
@@ -430,14 +808,38 @@ Steps, in order:
   alarms      2 operational + 2 agent-quality alarms
   smoke       POST a real alert and tail the logs
 
-  all         every step above, in order
+  all         the ten steps above, in order
 
-Configuration (override in the environment or infra/.env):
+The ECS Fargate eval runner -- a sweep outlives Lambda's 15-minute ceiling:
+  ecr         two ECR repositories, scan-on-push, untagged images expire
+  image       build and push the eval-runner image (amd64)
+  ecs         execution role + task role + cluster + log group + task definition
+  evalrun     run one full sweep as a Fargate task and tail it to completion
+
+  ecs_all     ecr, image, ecs -- everything except actually running a sweep
+
+Bedrock AgentCore Runtime -- the same agent, deployed a second way:
+  agentcore_image    build and push the agent image (arm64; AgentCore requires it)
+  agentcore_deploy   runtime execution role + create or update the agent runtime
+  agentcore_invoke   invoke it once with a real alert and print the response
+
+  agentcore_all      all three of the above, in order
+
+Both container targets need Docker and are deliberately outside \`all\`: neither
+is required to run or demonstrate the serverless system, and both push images
+that cost storage. Run them explicitly.
+
+Configuration (override in the environment or infra/.env -- see .env.example):
   AWS_REGION=$AWS_REGION
   FUNCTION_NAME=$FUNCTION_NAME
   TABLE_NAME=$TABLE_NAME
   TOPIC_NAME=$TOPIC_NAME
   MODEL_ID=$MODEL_ID
+  PROMPT_VARIANT=$PROMPT_VARIANT
+  ECR_REPO_NAME=$ECR_REPO_NAME
+  ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
+  AGENTCORE_RUNTIME_NAME=$AGENTCORE_RUNTIME_NAME
+  IMAGE_TAG=$IMAGE_TAG
   PAGER_EMAIL=${PAGER_EMAIL:-<unset>}
   TRIAGE_API_KEY=${TRIAGE_API_KEY:+<set>}
 
@@ -449,11 +851,15 @@ main() {
   local step="${1:-}"
   shift || true
   case "$step" in
-    preflight|iam|sns|dynamodb|package|lambda|api|seed|alarms|smoke)
+    preflight|iam|sns|dynamodb|package|lambda|api|seed|alarms|smoke|ecr|image|ecs|evalrun|agentcore_image|agentcore_deploy|agentcore_invoke)
       "step_$step" "$@" ;;
     all)
       step_preflight; step_iam; step_sns; step_dynamodb
       step_package;   step_lambda; step_api; step_seed; step_alarms; step_smoke ;;
+    ecs_all)
+      step_ecr; step_image; step_ecs ;;
+    agentcore_all)
+      step_agentcore_image; step_agentcore_deploy; step_agentcore_invoke ;;
     ""|-h|--help|help) usage ;;
     *) die "unknown step '$step'. Run without arguments to see the list." ;;
   esac

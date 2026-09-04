@@ -1,0 +1,44 @@
+# The triage agent as a Bedrock AgentCore Runtime container.
+#
+# AgentCore Runtime is the third way this same agent can be deployed, after
+# Lambda behind API Gateway and a direct invoke. It runs a container and speaks
+# HTTP to it rather than invoking a function, so the only new code is the
+# transport in agent/server.py -- auth, validation, the Converse loop, the five
+# tools and the metrics are the same modules the Lambda uses. See
+# docs/decisions.md ADR-5 for why this is a second deployment target rather
+# than a replacement for the Lambda.
+#
+# Built and pushed by `bash infra/setup.sh agentcore-image`.
+
+# ARM64 is not a preference. AgentCore Runtime only accepts linux/arm64 images,
+# and an amd64 image is rejected at CreateAgentRuntime with an error that does
+# not mention architecture. On an x86 build host this needs buildx with
+# --platform linux/arm64, which is what setup.sh passes.
+FROM --platform=linux/arm64 public.ecr.aws/docker/library/python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN python -m pip install -r requirements.txt
+
+# Only the agent package. The eval harness is not part of the deployed agent --
+# shipping the scorers and the scripted model inside the thing they grade would
+# be both pointless and confusing.
+COPY agent/ ./agent/
+
+RUN useradd --system --uid 10001 --user-group --shell /usr/sbin/nologin agent
+USER agent
+
+# AgentCore requires 8080 and does not negotiate.
+EXPOSE 8080
+
+# No HEALTHCHECK instruction: AgentCore polls GET /ping itself and a
+# container-level healthcheck would be a second, unread opinion about the same
+# thing. `python -m` rather than a script path so imports resolve identically
+# to every other entrypoint in this project.
+ENTRYPOINT ["python", "-m", "agent.server"]
